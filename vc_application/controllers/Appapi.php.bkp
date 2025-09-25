@@ -1,0 +1,843 @@
+<?php
+defined('BASEPATH') OR exit('No direct script access allowed');
+
+//require APPPATH . 'libraries/REST_Controller.php';
+require(APPPATH.'/libraries/REST_Controller.php');
+class Appapi extends REST_Controller {
+    
+    private $auth = 'authcode';
+    
+	public	 function __construct() {
+		parent::__construct(); 
+		//$this->load->helper('url'); 
+		$this->load->model('Appapi_model'); 
+		
+		//header('Content-Type: application/json');
+	}
+	
+	public function generateToken($length = 10) {
+        $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $charactersLength = strlen($characters);
+        $randomString = '';
+        for ($i = 0; $i < $length; $i++) {
+            $randomString .= $characters[rand(0, $charactersLength - 1)];
+        }
+        return $randomString;
+    }
+    
+    public function checkToken($token=''){
+        
+        if($token == ''){
+            $this->response([
+                    'status' => FALSE,
+                    'message' => 'Token empty.'
+                ],REST_Controller::HTTP_UNAUTHORIZED);
+            return false;
+        }
+        
+        $tokenInfo = $this->Appapi_model->get_data_by_column('token',$token,'drivers','id');
+        
+        if(empty($tokenInfo)) {
+            $this->response([
+                    'status' => FALSE,
+                    'message' => 'Token is wrong.'
+                ],REST_Controller::HTTP_UNAUTHORIZED);
+            return false;
+        }
+        else {
+            return true;
+        }
+    }
+    
+	public function testheader_post(){
+	    $data = array();
+	    foreach (getallheaders() as $name => $value) {
+            $data[] =  $name.' : '.$value;
+        }
+        $this->response([
+                    'status' => TRUE,
+                    'message' => 'Done',
+                    'data' => $data
+                ], REST_Controller::HTTP_OK);
+	}
+	
+	// https://dispatch.patransportca.com/Appapi/driverlogin
+	public function driverlogin_post(){ 
+	    
+	    $json = file_get_contents('php://input');
+	    $data = json_decode($json,true);
+	    
+	   if($data) { 
+	    
+	    $phone = $data['phone']; //$this->post('phone');
+        $dcode = $data['dcode']; //$this->post('dcode');
+	        
+	    //if($phone != '' && $dcode != '')	{  
+	        
+	          $getInfo = $this->Appapi_model->driverLogin($phone,$dcode);
+	          
+	          if(empty($getInfo)) {
+	              $this->response([
+                    'status' => FALSE,
+                    'message' => 'Phone number or dcode is wrong',
+                    'data' => array()
+                ], REST_Controller::HTTP_UNAUTHORIZED);
+	          } else {
+	              $token = $this->generateToken(20).md5(md5(date('YmdHis'))).$this->generateToken(25);
+	              $getInfo[0]['token'] = $token;
+	              
+	              $this->Appapi_model->update_table_by_id('id',$getInfo[0]['id'],'drivers',array('token'=>$token));
+	              
+	              $this->response([
+                        'status' => TRUE,
+                        'message' => 'Login successfully.',
+                        'data' => $getInfo
+                    ], REST_Controller::HTTP_OK);
+	          }
+	    }
+	    else{
+            // Set the response and exit
+             $this->response([
+                    'status' => FALSE,
+                    'message' => 'Please send required parameters.'
+                ],REST_Controller::HTTP_UNAUTHORIZED);
+        }
+	    
+	}
+	
+	//https://dispatch.patransportca.com/Appapi/driverinfo/6 
+	public function driverinfo_post() { 
+	    $token = '';
+	    $header = getallheaders(); //apache_request_headers();
+        foreach ($header as $headers => $value) {
+            //echo "$headers: $value <br />\n";
+            if($headers == 'Token'){
+                $token = $value;
+            }
+        }
+                    
+	    $json = file_get_contents('php://input');
+	    $data = json_decode($json,true);
+	    
+	   if($data) { 
+	    $id = $data['id'];
+	    //$token = $data['token'];
+	    $checkToken = $this->checkToken($token);
+	    
+	    if(!$checkToken) { return false; }
+	    
+	    $columns = 'id,dname,phone,dimage,email,address';
+        $driver = $this->Appapi_model->get_data_by_column('id',$id,'drivers',$columns);
+        // Check if the user data exists
+        if(!empty($driver)){
+            $this->response([
+                        'status' => TRUE,
+                        'message' => 'Driver info.',
+                        'data' => $driver
+                    ], REST_Controller::HTTP_OK);
+        }else{
+            $this->response([
+                        'status' => FALSE,
+                        'message' => 'Driver info not found.',
+                        'data' => ''
+                    ], REST_Controller::HTTP_UNAUTHORIZED);
+        }
+	   } else {
+	       $this->response([
+                    'status' => FALSE,
+                    'message' => 'Please send required parameters.'
+                ],REST_Controller::HTTP_UNAUTHORIZED);
+	   }
+    }
+    
+    public function driverlogout_post() { 
+	    
+	    $token = '';
+	    $header = getallheaders(); //apache_request_headers();
+        foreach ($header as $headers => $value) { 
+            if($headers == 'Token'){
+                $token = $value;
+            }
+        }
+        
+	    $checkToken = $this->checkToken($token);
+	    
+	    if(!$checkToken) { return false; }
+	    
+	    $columnsData = array('token'=>'');
+        $driver = $this->Appapi_model->update_table_by_id('token',$token,'drivers',$columnsData); 
+        
+            $this->response([
+                        'status' => TRUE,
+                        'message' => 'Logout successfully.',
+                        'data' => array()
+                    ], REST_Controller::HTTP_OK);
+       
+    }
+    
+    public function checkdrivershiftstatus_post() { 
+	    $token = '';
+	    $header = getallheaders();  
+        foreach ($header as $headers => $value) { 
+            if($headers == 'Token'){
+                $token = $value;
+            }
+        }
+                    
+	      
+	    $json = file_get_contents('php://input');
+	    $data = json_decode($json,true);
+	    
+	   if($data) {  
+	    $driverId = $data['id'];
+	    $checkToken = $this->checkToken($token);
+	    
+	    if(!$checkToken) { return false; }
+	    
+	  if($driverId) {
+        $driver = $this->Appapi_model->checkShiftStatus('true',$driverId);
+        // Check if the user data exists
+        if(!empty($driver)){
+            $currentDate = $this->Appapi_model->get_data_by_column('id',$driver[0]['id'],'driver_shift','end_date, start_date');
+            $this->response([
+                        'status' => TRUE,
+                        'message' => 'Shift started already.',
+                        'data' => array('startDate'=>$currentDate[0]['start_date'])
+                    ], REST_Controller::HTTP_OK);
+        }else{
+            
+            $this->response([
+                        'status' => TRUE,
+                        'message' => 'Shift not start yet.',
+                        'data' => array()
+                    ], REST_Controller::HTTP_OK);
+        }
+	  }
+	  elseif($status == 'false') {
+	      $driver = $this->Appapi_model->checkShiftStatus('true',$driverId);
+        // Check if the user data exists
+        if(empty($driver)){
+            $this->response([
+                        'status' => TRUE,
+                        'message' => 'Shift not started yet please first start the shift.',
+                        'data' => array()
+                    ], REST_Controller::HTTP_OK);
+        }else{
+            $updateData = array('status'=>'closed');
+            $this->Appapi_model->updateShiftStatus($updateData,$driverId);
+            
+            $currentDate = $this->Appapi_model->get_data_by_column('id',$driver[0]['id'],'driver_shift','end_date, start_date');
+            
+            $this->response([
+                        'status' => TRUE,
+                        'message' => 'Shift ended successfully.',
+                        'data' => array('startDate'=>$currentDate[0]['end_date'])
+                    ], REST_Controller::HTTP_OK);
+        }
+	  }
+	   } else {
+	       $this->response([
+                    'status' => FALSE,
+                    'message' => 'Please send required parameters.'
+                ],REST_Controller::HTTP_UNAUTHORIZED);
+	   }
+    }
+    
+    
+    public function drivershiftstartend_put() { 
+	    $token = '';
+	    $header = getallheaders();  
+        foreach ($header as $headers => $value) { 
+            if($headers == 'Token'){
+                $token = $value;
+            }
+        }
+                    
+	      
+	    $json = file_get_contents('php://input');
+	    $data = json_decode($json,true);
+	    
+	   if($data) {  
+	    $driverId = $data['id'];
+	    $status = $data['isavailable'];
+	    if($status == '') { $status = 'true'; }
+	    $checkToken = $this->checkToken($token);
+	    
+	    if(!$checkToken) { return false; }
+	    
+	  if($status == 'true') {
+        $driver = $this->Appapi_model->checkShiftStatus('true',$driverId);
+        // Check if the user data exists
+        if(!empty($driver)){
+            $currentDate = $this->Appapi_model->get_data_by_column('id',$driver[0]['id'],'driver_shift','end_date, start_date');
+            $this->response([
+                        'status' => TRUE,
+                        'message' => 'Shift started already.',
+                        'data' => array('startDate'=>$currentDate[0]['start_date'])
+                    ], REST_Controller::HTTP_OK);
+        }else{
+            $insertData = array('driver_id'=>$driverId,'status'=>'true');
+            $insertId = $this->Appapi_model->add_data_in_table($insertData,'driver_shift');
+            
+            $currentDate = $this->Appapi_model->get_data_by_column('id',$insertId,'driver_shift','end_date, start_date');
+            
+            $this->response([
+                        'status' => TRUE,
+                        'message' => 'Shift start successfully.',
+                        'data' => array('startDate'=>$currentDate[0]['start_date'])
+                    ], REST_Controller::HTTP_OK);
+        }
+	  }
+	  elseif($status == 'false') {
+	      $driver = $this->Appapi_model->checkShiftStatus('true',$driverId);
+        // Check if the user data exists
+        if(empty($driver)){
+            $this->response([
+                        'status' => TRUE,
+                        'message' => 'Shift not started yet please first start the shift.',
+                        'data' => array()
+                    ], REST_Controller::HTTP_OK);
+        }else{
+            $updateData = array('status'=>'closed');
+            $this->Appapi_model->updateShiftStatus($updateData,$driverId);
+            
+            $currentDate = $this->Appapi_model->get_data_by_column('id',$driver[0]['id'],'driver_shift','end_date, start_date');
+            
+            $this->response([
+                        'status' => TRUE,
+                        'message' => 'Shift ended successfully.',
+                        'data' => array('startDate'=>$currentDate[0]['end_date'])
+                    ], REST_Controller::HTTP_OK);
+        }
+	  }
+	   } else {
+	       $this->response([
+                    'status' => FALSE,
+                    'message' => 'Please send required parameters.'
+                ],REST_Controller::HTTP_UNAUTHORIZED);
+	   }
+    }
+    
+    public function previousshift_post(){
+        $token = '';
+	    $header = getallheaders();  
+        foreach ($header as $headers => $value) { 
+            if($headers == 'Token'){
+                $token = $value;
+            }
+        }
+                    
+	    $json = file_get_contents('php://input');
+	    $data = json_decode($json,true);
+	    
+	   if($data) { 
+	    $driverId = $data['id'];
+	    $date = $data['date'];
+	    $checkToken = $this->checkToken($token);
+	    
+	    if(!$checkToken) { return false; }
+	    
+	    if($date == '') {
+	        $startDate = '2016-01-01 23:59:59';
+            $endDate = date('Y-m-d').' 23:59:59';
+	    } else {
+	        $startDate = date('Y-m-d',strtotime($date)).' 00:00:01';
+	        $endDate = date('Y-m-d',strtotime($date)).' 23:59:59';
+	    }
+	    
+	    $shiftInfo = $this->Appapi_model->getPreviousShift($driverId,$startDate,$endDate);
+	    
+        if(!empty($shiftInfo)){
+            $this->response([
+                        'status' => TRUE,
+                        'message' => 'Successfully.',
+                        'data' => $shiftInfo
+                    ], REST_Controller::HTTP_OK);
+        }else{
+            $this->response([
+                        'status' => FALSE,
+                        'message' => 'Records not found.',
+                        'data' => array()
+                    ], REST_Controller::HTTP_UNAUTHORIZED);
+        }
+	   } else {
+	       $this->response([
+                    'status' => FALSE,
+                    'message' => 'Please send required parameters.'
+                ],REST_Controller::HTTP_UNAUTHORIZED);
+	   }
+    }
+    
+    public function triphistory_post(){
+        $token = '';
+	    $header = getallheaders();  
+        foreach ($header as $headers => $value) { 
+            if($headers == 'Token'){
+                $token = $value;
+            }
+        }
+                    
+	    $json = file_get_contents('php://input');
+	    $data = json_decode($json,true);
+	    
+	   if($data) { 
+	    $driverId = $data['id'];
+	    $type = $data['type'];
+	    $sdate = $data['startdate'];
+	    $edate = $data['enddate'];
+	     
+	    $checkToken = $this->checkToken($token);
+	    
+	    if(!$checkToken) { return false; }
+	    
+	    $typeArray = array('today','week','month','calendar');
+	    
+	    if($type == 'week') {
+	        $startDate = date('Y-m-d',strtotime('last monday')). ' 00:00:01';
+	        $endDate = date('Y-m-d',strtotime("+7 days",strtotime($startDate))). ' 23:59:59';
+	    }
+	    elseif($type == 'month'){
+	        $startDate = date('Y-m-01').' 00:00:01';
+	        $endDate = date('Y-m-t').' 23:59:59';
+	    }
+	    elseif($type == 'calendar'){
+	        $startDate = $sdate.' 00:00:01';
+	        $endDate = $edate.' 23:59:59';
+	    }
+	    else {
+	        $startDate = date('Y-m-d').' 00:00:01';
+	        $endDate = date('Y-m-d').' 23:59:59';
+	    }
+	    
+	    $shiftInfo = $this->Appapi_model->getTripHistory($driverId,$startDate,$endDate);
+	    
+        if(!empty($shiftInfo)  && in_array($type, $typeArray)){
+            $this->response([
+                        'status' => TRUE,
+                        'message' => 'Successfully.',
+                        'data' => $shiftInfo
+                    ], REST_Controller::HTTP_OK);
+        }else{
+            $this->response([
+                        'status' => FALSE,
+                        'message' => 'Records not found.',
+                        'data' => array()
+                    ], REST_Controller::HTTP_UNAUTHORIZED);
+        }
+	   } else {
+	       $this->response([
+                    'status' => FALSE,
+                    'message' => 'Please send required parameters.'
+                ],REST_Controller::HTTP_UNAUTHORIZED);
+	   }
+    }
+    
+    public function tripinfo_post(){
+        $token = '';
+	    $header = getallheaders();  
+        foreach ($header as $headers => $value) { 
+            if($headers == 'Token'){
+                $token = $value;
+            }
+        }
+                    
+	    $json = file_get_contents('php://input');
+	    $data = json_decode($json,true);
+	    
+	   if($data) { 
+	    $driverId = $data['driverid'];
+	    $tripId = $data['tripid'];
+	     
+	    $checkToken = $this->checkToken($token);
+	    
+	    if(!$checkToken) { return false; }
+	     
+	    
+	    $tripInfo = $this->Appapi_model->getTripInfo($driverId,$tripId);
+	    
+        if(!empty($tripInfo) && $tripId){
+            $this->response([
+                        'status' => TRUE,
+                        'message' => 'Successfully.',
+                        'data' => $tripInfo
+                    ], REST_Controller::HTTP_OK);
+        }else{
+            $this->response([
+                        'status' => FALSE,
+                        'message' => 'Records not found.',
+                        'data' => array()
+                    ], REST_Controller::HTTP_UNAUTHORIZED);
+        }
+	   } else {
+	       $this->response([
+                    'status' => FALSE,
+                    'message' => 'Please send required parameters.'
+                ],REST_Controller::HTTP_UNAUTHORIZED);
+	   }
+    }
+    
+    public function tripinfostatusupdate_post(){
+        $token = '';
+	    $header = getallheaders();  
+        foreach ($header as $headers => $value) { 
+            if($headers == 'Token'){
+                $token = $value;
+            }
+        }
+                    
+	    $json = file_get_contents('php://input');
+	    $data = json_decode($json,true);
+	    
+	   if($data) { 
+	    $driverId = $data['driverid'];
+	    $tripId = $data['tripid'];
+	    $status = $data['status'];
+	    $notes = $data['notes'];
+	     
+	    $checkToken = $this->checkToken($token);
+	    
+	    if(!$checkToken) { return false; }
+	      
+        if($tripId && $status){
+            $updateInfo = array('status'=>$status);
+            if($notes != '') { $updateInfo['notes'] = $notes; }
+            $tripInfo = $this->Appapi_model->update_table_by_id('id',$tripId,'dispatch',$updateInfo);
+            $this->response([
+                        'status' => TRUE,
+                        'message' => 'Status update successfully.',
+                        'data' => array()
+                    ], REST_Controller::HTTP_OK);
+        }else{
+            $this->response([
+                        'status' => FALSE,
+                        'message' => 'Records not found.',
+                        'data' => array()
+                    ], REST_Controller::HTTP_UNAUTHORIZED);
+        }
+	   } else {
+	       $this->response([
+                    'status' => FALSE,
+                    'message' => 'Please send required parameters.'
+                ],REST_Controller::HTTP_UNAUTHORIZED);
+	   }
+    }
+    
+    
+    public function getvehicles_get(){
+        $token = '';
+	    $header = getallheaders();  
+        foreach ($header as $headers => $value) { 
+            if($headers == 'Token'){
+                $token = $value;
+            }
+        }
+          
+	    $checkToken = $this->checkToken($token);
+	    
+	    if(!$checkToken) { return false; }
+	    
+	    
+	    $vehicles = $this->Appapi_model->get_data_by_table('vehicles','id,vname,vnumber');
+	    
+        if(!empty($vehicles)){
+            $this->response([
+                        'status' => TRUE,
+                        'message' => 'Successfully.',
+                        'data' => $vehicles
+                    ], REST_Controller::HTTP_OK);
+        }else{
+            $this->response([
+                        'status' => FALSE,
+                        'message' => 'Records not found.',
+                        'data' => array()
+                    ], REST_Controller::HTTP_UNAUTHORIZED);
+        } 
+    }
+    
+    public function addfuel_post() { 
+        
+        $this->load->helper(array('form', 'url'));
+        $config = array(
+            'upload_path' => "assets/fuel/",
+            'allowed_types' => "jpg|jpeg|png|gif|pdf|doc|docx|docm|xls|xlsx|xlsm", 
+            'overwrite' => FALSE,
+            'encrypt_name' => TRUE,
+          //  'max_size' => "1000",
+            //'max_height' => "768",
+            //'max_width' => "1024"
+        );
+    
+	    $token = '';
+	    $header = getallheaders();  
+        foreach ($header as $headers => $value) { 
+            if($headers == 'Token'){
+                $token = $value;
+            }
+        } 
+	    
+	  
+	    $driverId = $this->post('driverid'); //$data['driverid'];
+	    $date = $this->post('date');
+	    $amount = $this->post('amount');
+	    $truckid = $this->post('truckid');
+	    
+	    $checkToken = $this->checkToken($token);
+	    
+	    if(!$checkToken) { return false; }
+	    
+	  if($amount > 0 && $truckid > 0 && $driverId > 0 && $date != '') {
+	      
+	    $fuel_file = ''; $uploadFile = 'true';
+	    if(!empty($_FILES['fuel_file']['name'])){
+                $config['file_name'] = $_FILES['fuel_file']['name']; 
+                $this->load->library('upload',$config);
+                $this->upload->initialize($config); 
+                if($this->upload->do_upload('fuel_file')){
+                    $uploadData = $this->upload->data();
+                    $fuel_file = $uploadData['file_name'];
+                } else {
+                    $uploadFile = 'false';
+                }
+        }
+	    if($uploadFile == 'false') {
+	        $this->response([
+                        'status' => true,
+                        'message' => 'Document not upload please try again.',
+                        'data' => array()
+                    ], REST_Controller::HTTP_OK);
+	    } else {
+	        $fuelData = array('driver_id'=>$driverId, 'amount'=>$amount, 'truck'=>$truckid,'document'=>$fuel_file,'fdate'=>$date);
+            $driver = $this->Appapi_model->add_data_in_table($fuelData,'fuel');
+        
+            $this->response([
+                        'status' => true,
+                        'message' => 'Fuel added successfully.',
+                        'data' => array()
+                    ], REST_Controller::HTTP_OK);
+	    }
+	  
+	   } else {
+	       $this->response([
+                    'status' => FALSE,
+                    'message' => 'Please send required parameters.'
+                ],REST_Controller::HTTP_UNAUTHORIZED);
+	   }
+    }
+    
+    public function addreimbursement_post() { 
+        
+        $this->load->helper(array('form', 'url'));
+        $config = array(
+            'upload_path' => "assets/reimbursement/",
+            'allowed_types' => "jpg|jpeg|png|gif|pdf|doc|docx|docm|xls|xlsx|xlsm", 
+            'overwrite' => FALSE,
+            'encrypt_name' => TRUE,
+          //  'max_size' => "1000",
+            //'max_height' => "768",
+            //'max_width' => "1024"
+        );
+    
+	    $token = '';
+	    $header = getallheaders();  
+        foreach ($header as $headers => $value) { 
+            if($headers == 'Token'){
+                $token = $value;
+            }
+        } 
+	    
+	  
+	    $driverId = $this->post('driverid'); //$data['driverid'];
+	    $date = $this->post('date');
+	    $amount = $this->post('amount');
+	    $truckid = $this->post('truckid');
+	    
+	    $checkToken = $this->checkToken($token);
+	    
+	    if(!$checkToken) { return false; }
+	    
+	  if($amount > 0 && $truckid > 0 && $driverId > 0 && $date != '') {
+	      
+	    $document = ''; $uploadFile = 'true';
+	    if(!empty($_FILES['document']['name'])){
+                $config['file_name'] = $_FILES['document']['name']; 
+                $this->load->library('upload',$config);
+                $this->upload->initialize($config); 
+                if($this->upload->do_upload('document')){
+                    $uploadData = $this->upload->data();
+                    $document = $uploadData['file_name'];
+                } else {
+                    $uploadFile = 'false';
+                }
+        }
+	    if($uploadFile == 'false') {
+	        $this->response([
+                        'status' => true,
+                        'message' => 'Document not upload please try again.',
+                        'data' => array()
+                    ], REST_Controller::HTTP_OK);
+	    } else {
+	        $updateData = array('driver_id'=>$driverId, 'amount'=>$amount, 'truck'=>$truckid,'document'=>$document,'fdate'=>$date);
+            $driver = $this->Appapi_model->add_data_in_table($updateData,'reimbursement');
+        
+            $this->response([
+                        'status' => true,
+                        'message' => 'Reimbursement added successfully.',
+                        'data' => array()
+                    ], REST_Controller::HTTP_OK);
+	    }
+	  
+	   } else {
+	       $this->response([
+                    'status' => FALSE,
+                    'message' => 'Please send required parameters.'
+                ],REST_Controller::HTTP_UNAUTHORIZED);
+	   }
+    }
+    
+    public function addtrucksuppliesrequest_post() { 
+        
+        $this->load->helper(array('form', 'url'));
+        $config = array(
+            'upload_path' => "assets/trucksuppliesrequest/",
+            'allowed_types' => "jpg|jpeg|png|gif|pdf|doc|docx|docm|xls|xlsx|xlsm", 
+            'overwrite' => FALSE,
+            'encrypt_name' => TRUE,
+          //  'max_size' => "1000",
+            //'max_height' => "768",
+            //'max_width' => "1024"
+        );
+    
+	    $token = '';
+	    $header = getallheaders();  
+        foreach ($header as $headers => $value) { 
+            if($headers == 'Token'){
+                $token = $value;
+            }
+        } 
+	    
+	  
+	    $driverId = $this->post('driverid'); //$data['driverid'];
+	    $date = $this->post('date');
+	    $amount = $this->post('amount');
+	    $truckid = $this->post('truckid');
+	    
+	    $checkToken = $this->checkToken($token);
+	    
+	    if(!$checkToken) { return false; }
+	    
+	  if($amount > 0 && $truckid > 0 && $driverId > 0 && $date != '') {
+	      
+	    $document = ''; $uploadFile = 'true';
+	    if(!empty($_FILES['document']['name'])){
+                $config['file_name'] = $_FILES['document']['name']; 
+                $this->load->library('upload',$config);
+                $this->upload->initialize($config); 
+                if($this->upload->do_upload('document')){
+                    $uploadData = $this->upload->data();
+                    $document = $uploadData['file_name'];
+                } else {
+                    $uploadFile = 'false';
+                }
+        }
+	    if($uploadFile == 'false') {
+	        $this->response([
+                        'status' => true,
+                        'message' => 'Document not upload please try again.',
+                        'data' => array()
+                    ], REST_Controller::HTTP_OK);
+	    } else {
+	        $updateData = array('driver_id'=>$driverId, 'amount'=>$amount, 'truck'=>$truckid,'document'=>$document,'fdate'=>$date);
+            $driver = $this->Appapi_model->add_data_in_table($updateData,'truck_supplies_request');
+        
+            $this->response([
+                        'status' => true,
+                        'message' => 'Truck supplies request added successfully.',
+                        'data' => array()
+                    ], REST_Controller::HTTP_OK);
+	    }
+	  
+	   } else {
+	       $this->response([
+                    'status' => FALSE,
+                    'message' => 'Please send required parameters.'
+                ],REST_Controller::HTTP_UNAUTHORIZED);
+	   }
+    }
+    
+    public function addothers_post() { 
+        
+        $this->load->helper(array('form', 'url'));
+        $config = array(
+            'upload_path' => "assets/reimbursement/",
+            'allowed_types' => "jpg|jpeg|png|gif|pdf|doc|docx|docm|xls|xlsx|xlsm", 
+            'overwrite' => FALSE,
+            'encrypt_name' => TRUE,
+          //  'max_size' => "1000",
+            //'max_height' => "768",
+            //'max_width' => "1024"
+        );
+    
+	    $token = '';
+	    $header = getallheaders();  
+        foreach ($header as $headers => $value) { 
+            if($headers == 'Token'){
+                $token = $value;
+            }
+        } 
+	    
+	  
+	    $driverId = $this->post('driverid'); //$data['driverid'];
+	    $date = $this->post('date');
+	    $amount = $this->post('amount');
+	    $truckid = $this->post('truckid');
+	    $type = $this->post('type');
+	    $notes = $this->post('notes');
+	    
+	    $checkToken = $this->checkToken($token);
+	    
+	    if(!$checkToken) { return false; }
+	    
+	    $typeArray = array('fuel','reimbursement','truck_supplies_request');
+	    
+	  if($amount > 0 && $truckid > 0 && $driverId > 0 && $date != '' && $type != '' && in_array($type, $typeArray)) {
+	      
+	    $document = ''; $uploadFile = 'true';
+	    if(!empty($_FILES['document']['name'])){
+                $config['file_name'] = $_FILES['document']['name']; 
+                $this->load->library('upload',$config);
+                $this->upload->initialize($config); 
+                if($this->upload->do_upload('document')){
+                    $uploadData = $this->upload->data();
+                    $document = $uploadData['file_name'];
+                } else {
+                    $uploadFile = 'false';
+                }
+        }
+	    if($uploadFile == 'false') {
+	        $this->response([
+                        'status' => FALSE,
+                        'message' => 'Document not upload please try again.',
+                        'data' => array()
+                    ], REST_Controller::HTTP_UNAUTHORIZED);
+	    } else {
+	        $updateData = array('driver_id'=>$driverId, 'amount'=>$amount, 'truck'=>$truckid,'notes'=>$notes,'document'=>$document,'fdate'=>$date);
+            $driver = $this->Appapi_model->add_data_in_table($updateData,$type);
+        
+            $this->response([
+                        'status' => TRUE,
+                        'message' => 'Record added successfully.',
+                        'data' => array()
+                    ], REST_Controller::HTTP_OK);
+	    }
+	  
+	   } else {
+	       $this->response([
+                    'status' => FALSE,
+                    'message' => 'Please send required parameters.'
+                ],REST_Controller::HTTP_UNAUTHORIZED);
+	   }
+    }
+    
+    
+}
+?>

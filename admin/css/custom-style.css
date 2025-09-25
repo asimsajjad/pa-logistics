@@ -1,0 +1,179 @@
+body{ font-family: "Inter", serif; background: #fff;}
+
+/* Admin Login CSS Start */
+.pt-admin-wrapper {min-height: 100vh; position: relative; width: 100%; background: url(../images/login-page-bg.webp) no-repeat;    background-size: cover; background-position: center;  display: flex;  flex-direction: column;  justify-content: center;  align-items: center;}
+.pt-adminlogin-box{ width: 90%; max-width: 505px;  border-radius: 15px;  box-shadow: 0 3px 20px #1d26260d;  margin: 30px;  padding: 45px;  background: #fff; border: none; height: auto; text-align: left; box-sizing: border-box;}
+.pt-logo-admin img{ height:80px; display:block; margin:0 auto; }
+.pt-adminlogin-box h1{font-weight: 700;font-size: 24px;line-height: 1;color: #000000;text-align: center; margin: 20px 0 40px 0;}
+.form-group, .pt-adminlogin-box .input {padding: 0 !important; margin-bottom: 20px;}
+.form-control{    height: 50px;  border-radius: 99px;  padding: 13px 20px;  font-size: 14px; border: 1px solid #E4E4E4;}
+textarea.form-control {height: 144px; border-radius: 26px;}
+.form-group label{font-size: 14px; line-height: 1.5em; font-weight: 500;  color: #071021; margin-bottom: 11px; position: relative;  z-index: 2;}
+.pt-adminlogin-box .form-group label:before{ content: "";  position: absolute;  top: 100%;  left: 1.21em; margin-top: 26px;}
+.pt-adminlogin-box .form-group.pt-username label:before {background: url("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMjMiIHZpZXdCb3g9IjAgMCAxNiAyMyIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTcuODAwOTggMTEuMzg3OUM4LjQwOTE0IDExLjQwMDYgOC45OTUxMiAxMS4yODk3IDkuNTU4OTMgMTEuMDU1M0MxMC4xMjI3IDEwLjgyMDkgMTAuNjIgMTAuNDg4MyAxMS4wNTA4IDEwLjA1NzVDMTEuNDgxNiA5LjYyNjc3IDExLjgxNDIgOS4xMjk0OCAxMi4wNDg2IDguNTY1NjdDMTIuMjgyOSA4LjAwMTg2IDEyLjQwMDEgNy40MTU4OCAxMi40MDAxIDYuODA3NzNDMTIuNDAwMSA2LjE5OTU3IDEyLjI4MjkgNS42MTM1OSAxMi4wNDg2IDUuMDQ5NzhDMTEuODE0MiA0LjQ4NTk3IDExLjQ3NTIgMy45OTUwMiAxMS4wMzE4IDMuNTc2OTFDMTAuNDQ5IDIuOTk0MSA5Ljc2NDgxIDIuNjAxMzMgOC45NzkyOCAyLjM5ODYxQzguMTkzNzUgMi4xOTU5IDcuNDA4MjIgMi4xOTU5IDYuNjIyNjkgMi4zOTg2MUM1LjgzNzE1IDIuNjAxMzMgNS4xNTI5OCAyLjk5NDEgNC41NzAxNyAzLjU3NjkxQzQuMTI2NzIgMy45OTUwMiAzLjc4NzggNC40ODU5NyAzLjU1MzQxIDUuMDQ5NzhDMy4zMTkwMiA1LjYxMzU5IDMuMjAxODIgNi4xOTk1NyAzLjIwMTgyIDYuODA3NzNDMy4yMDE4MiA3LjQxNTg4IDMuMzE5MDIgOC4wMDE4NiAzLjU1MzQxIDguNTY1NjdDMy43ODc4IDkuMTI5NDggNC4xMjAzOSA5LjYyNjc3IDQuNTUxMTYgMTAuMDU3NUM0Ljk4MTk0IDEwLjQ4ODMgNS40NzkyMyAxMC44MjA5IDYuMDQzMDQgMTEuMDU1M0M2LjYwNjg1IDExLjI4OTcgNy4xOTI4MyAxMS40MDA2IDcuODAwOTggMTEuMzg3OVpNNS4zNDkzNiA0LjM1NjExQzUuNjc4NzggNC4wMjY2OSA2LjA1NTcxIDMuNzczMjkgNi40ODAxNSAzLjU5NTkxQzYuOTA0NTkgMy40MTg1NCA3LjM0NDg3IDMuMzI5ODUgNy44MDA5OCAzLjMyOTg1QzguMjU3MSAzLjMyOTg1IDguNjk3MzggMy40MTg1NCA5LjEyMTgyIDMuNTk1OTFDOS41NDYyNiAzLjc3MzI5IDkuOTIzMTkgNC4wMjM1MiAxMC4yNTI2IDQuMzQ2NjFDMTAuNTgyIDQuNjY5NjkgMTAuODM1NCA1LjA0NjYyIDExLjAxMjggNS40NzczOUMxMS4xOTAyIDUuOTA4MTcgMTEuMjc4OSA2LjM1MTYxIDExLjI3ODkgNi44MDc3M0MxMS4yNzg5IDcuMjYzODQgMTEuMTkwMiA3LjcwNzI5IDExLjAxMjggOC4xMzgwNkMxMC44MzU0IDguNTY4ODQgMTAuNTgyIDguOTQ1NzcgMTAuMjUyNiA5LjI2ODg1QzkuOTIzMTkgOS41OTE5MyA5LjU0NjI2IDkuODQyMTYgOS4xMjE4MiAxMC4wMTk1QzguNjk3MzggMTAuMTk2OSA4LjI1NzEgMTAuMjg1NiA3LjgwMDk4IDEwLjI4NTZDNy4zNDQ4NyAxMC4yODU2IDYuOTA0NTkgMTAuMTk2OSA2LjQ4MDE1IDEwLjAxOTVDNi4wNTU3MSA5Ljg0MjE2IDUuNjc4NzggOS41OTE5MyA1LjM0OTM2IDkuMjY4ODVDNS4wMTk5NSA4Ljk0NTc3IDQuNzY2NTUgOC41Njg4NCA0LjU4OTE3IDguMTM4MDZDNC40MTE3OSA3LjcwNzI5IDQuMzIzMTEgNy4yNjM4NCA0LjMyMzExIDYuODA3NzNDNC4zMjMxMSA2LjM1MTYxIDQuNDExNzkgNS45MDgxNyA0LjU4OTE3IDUuNDc3MzlDNC43NjY1NSA1LjA0NjYyIDUuMDE5OTUgNC42NzI4NSA1LjM0OTM2IDQuMzU2MTFaTTE1LjgwMiAxNi44NDIzQzE1Ljc3NjcgMTYuNDM2OCAxNS43MjkxIDE2LjAzNDYgMTUuNjU5NSAxNS42MzU1QzE1LjU4OTggMTUuMjM2NCAxNS40OTE2IDE0LjgzNzMgMTUuMzY0OSAxNC40MzgyQzE1LjIzODIgMTQuMDM5MSAxNS4wNzM1IDEzLjY2MjEgMTQuODcwOCAxMy4zMDc0QzE0LjY2OCAxMi45NTI2IDE0LjQxNDcgMTIuNjI5NSAxNC4xMTA2IDEyLjMzODFDMTMuODA2NSAxMi4wNDY3IDEzLjQ1MTcgMTEuODE4NyAxMy4wNDYzIDExLjY1MzlDMTIuNjAyOSAxMS40ODkyIDEyLjE0NjcgMTEuNDA2OSAxMS42NzggMTEuNDA2OUMxMS4zODY2IDExLjQzMjIgMTEuMTMzMiAxMS41Mzk5IDEwLjkxNzggMTEuNzNMMTAuMTU3NiAxMi4yMjQxQzkuODQwODMgMTIuNDE0MSA5LjUwNTA4IDEyLjU1OTggOS4xNTAzMiAxMi42NjEyQzguMzI2NzggMTIuOTI3MyA3LjUwOTU4IDEyLjkyNzMgNi42OTg3IDEyLjY2MTJDNi4zNDM5NSAxMi41NTk4IDYuMDA4MiAxMi40MDc4IDUuNjkxNDUgMTIuMjA1MUM1LjM3NDcgMTIuMDAyNCA1LjExNDk3IDExLjg0NCA0LjkxMjI1IDExLjczQzQuNjk2ODcgMTEuNTUyNiA0LjQ0OTggMTEuNDQ0OSA0LjE3MTA3IDExLjQwNjlDMy43MDIyOCAxMS40MDY5IDMuMjQ2MTcgMTEuNDg5MiAyLjgwMjcyIDExLjY1MzlDMi4zOTcyOSAxMS44MDYgMi4wNDI1MyAxMi4wMzA5IDEuNzM4NDUgMTIuMzI4NkMxLjQzNDM4IDEyLjYyNjQgMS4xODA5OCAxMi45NTI2IDAuOTc4MjYxIDEzLjMwNzRDMC43NzU1NDMgMTMuNjYyMSAwLjYxMDgzNSAxNC4wMzU5IDAuNDg0MTM3IDE0LjQyODZDMC4zNTc0MzggMTQuODIxNCAwLjI1NjA3OSAxNS4yMjA1IDAuMTgwMDYgMTUuNjI2QzAuMTA0MDQxIDE2LjAzMTQgMC4wNTMzNjEyIDE2LjQzNjggMC4wMjgwMjE1IDE2Ljg0MjNDMC4wMDI2ODE3NSAxNy4zMjM3IC0wLjAwOTk4ODExIDE3LjY5NzUgLTAuMDA5OTg4MTEgMTcuOTYzNUMtMC4wMzUzMjc4IDE4LjQwNyAwLjAzNzUyMzkgMTguODM3OCAwLjIwODU2NyAxOS4yNTU5QzAuMzc5NjEgMTkuNjc0IDAuNjI2NjczIDIwLjAzODIgMC45NDk3NTQgMjAuMzQ4NkMxLjI3Mjg0IDIwLjY1OTEgMS42NDM0MyAyMC44ODcxIDIuMDYxNTMgMjEuMDMyOEMyLjQ3OTY0IDIxLjE3ODUgMi45MTA0MiAyMS4yNDUgMy4zNTM4NiAyMS4yMzI0SDEyLjQ5NTJDMTIuOTM4NiAyMS4yNDUgMTMuMzY5NCAyMS4xNzg1IDEzLjc4NzUgMjEuMDMyOEMxNC4yMDU2IDIwLjg4NzEgMTQuNTc2MiAyMC42NTkxIDE0Ljg5OTMgMjAuMzQ4NkMxNS4yMjI0IDIwLjAzODIgMTUuNDY5NCAxOS42NzQgMTUuNjQwNSAxOS4yNTU5QzE1LjgxMTUgMTguODM3OCAxNS44ODQ0IDE4LjQwNyAxNS44NTkgMTcuOTYzNUMxNS44NTkgMTcuNjk3NSAxNS44NDYzIDE3LjMyMzcgMTUuODIxIDE2Ljg0MjNIMTUuODAyWk0xNC4xNDg2IDE5LjU0MDlDMTMuOTIwNSAxOS43NDM3IDEzLjY2NCAxOS44OTI1IDEzLjM3ODkgMTkuOTg3NkMxMy4wOTM4IDIwLjA4MjYgMTIuNzk5MiAyMC4xMjM4IDEyLjQ5NTIgMjAuMTExMUgzLjMzNDg2QzMuMDMwNzggMjAuMTIzOCAyLjczOTM3IDIwLjA4MjYgMi40NjA2NCAxOS45ODc2QzIuMTgxOSAxOS44OTI1IDEuOTMxNjcgMTkuNzQzNyAxLjcwOTk1IDE5LjU0MDlDMS40ODgyMiAxOS4zMzgyIDEuMzI2NjggMTkuMDk3NSAxLjIyNTMyIDE4LjgxODhDMS4xMjM5NiAxOC41NCAxLjA3OTYyIDE4LjI1NDkgMS4wOTIyOSAxNy45NjM1QzEuMDkyMjkgMTcuNzIyOCAxLjEwNDk2IDE3LjM3NDQgMS4xMzAzIDE2LjkxODNDMS4xNTU2NCAxNi41NTA5IDEuMjAzMTUgMTYuMTg5OCAxLjI3Mjg0IDE1LjgzNUMxLjM0MjUyIDE1LjQ4MDIgMS40MjgwNCAxNS4xMjU1IDEuNTI5NCAxNC43NzA3QzEuNjQzNDMgMTQuNDU0IDEuNzgyOCAxNC4xNDk5IDEuOTQ3NTEgMTMuODU4NUMyLjA4Njg3IDEzLjU5MjQgMi4yNjQyNSAxMy4zNTQ5IDIuNDc5NjQgMTMuMTQ1OEMyLjY5NTAzIDEyLjkzNjggMi45Mzg5MiAxMi43Nzg0IDMuMjExMzIgMTIuNjcwN0MzLjQ4MzczIDEyLjU2MyAzLjc3MTk3IDEyLjUwOTIgNC4wNzYwNCAxMi41MDkyTDQuMzA0MSAxMi42NDIyTDUuMDgzMyAxMy4xNTUzQzUuNDc2MDYgMTMuMzk2MSA1Ljg5NDE3IDEzLjU4NjEgNi4zMzc2MSAxMy43MjU1QzYuODQ0NDEgMTMuODkwMiA3LjM3MDIxIDEzLjk3MjUgNy45MTUwMSAxMy45NzI1QzguNDU5ODIgMTMuOTcyNSA4Ljk4NTYxIDEzLjg5MDIgOS40OTI0MSAxMy43MjU1QzkuOTM1ODUgMTMuNTg2MSAxMC4zNTQgMTMuMzk2MSAxMC43NDY3IDEzLjE1NTNDMTAuODk4OCAxMy4wNTQgMTEuMTAxNSAxMi45MjA5IDExLjM1NDkgMTIuNzU2MkwxMS41MjU5IDEyLjY0MjJDMTEuNjUyNiAxMi41Nzg4IDExLjcyODYgMTIuNTM0NSAxMS43NTQgMTIuNTA5MkMxMi4wNTgxIDEyLjUwOTIgMTIuMzQ2MyAxMi41NjMgMTIuNjE4NyAxMi42NzA3QzEyLjg5MTEgMTIuNzc4NCAxMy4xMzE4IDEyLjkzNjggMTMuMzQwOSAxMy4xNDU4QzEzLjU0OTkgMTMuMzU0OSAxMy43MzA1IDEzLjU5MjQgMTMuODgyNSAxMy44NTg1QzE0LjA0NzIgMTQuMTQ5OSAxNC4xODY2IDE0LjQ1NCAxNC4zMDA2IDE0Ljc3MDdDMTQuNDAyIDE1LjEyNTUgMTQuNDg3NSAxNS40ODAyIDE0LjU1NzIgMTUuODM1QzE0LjYyNjkgMTYuMTg5OCAxNC42NzQ0IDE2LjU1MDkgMTQuNjk5NyAxNi45MTgzQzE0LjcyNTEgMTcuMzc0NCAxNC43Mzc3IDE3LjcyMjggMTQuNzM3NyAxNy45NjM1QzE0Ljc1MDQgMTguMjU0OSAxNC43MDYxIDE4LjU0IDE0LjYwNDcgMTguODE4OEMxNC41MDMzIDE5LjA5NzUgMTQuMzQ1IDE5LjMzODIgMTQuMTI5NiAxOS41NDA5SDE0LjE0ODZaIiBmaWxsPSIjMDcxMDIxIi8+Cjwvc3ZnPgo="); height: 23px; width: 16px;     background-repeat: no-repeat;  background-position: center;  background-size: contain;}
+.pt-adminlogin-box .form-group.pt-password label:before{background: url("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAxNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTYuOTI0OTkgMTYuNjAyNEM3LjA3Njk5IDE2LjYwMjQgNy4yMDY4MiAxNi41NDUzIDcuMzE0NDkgMTYuNDMxM0M3LjQyMjE2IDE2LjMxNzIgNy40NzU5OSAxNi4xODQxIDcuNDc1OTkgMTYuMDMyVjEzLjczMTNDNy40NzU5OSAxMy41NzkyIDcuNDIyMTYgMTMuNDQ5MyA3LjMxNDQ5IDEzLjM0MTVDNy4yMDY4MiAxMy4yMzM4IDcuMDc2OTkgMTMuMTc5OSA2LjkyNDk5IDEzLjE3OTlDNi43NzI5OSAxMy4xNzk5IDYuNjQzMTYgMTMuMjMzOCA2LjUzNTQ5IDEzLjM0MTVDNi40Mjc4MiAxMy40NDkzIDYuMzczOTkgMTMuNTc5MiA2LjM3Mzk5IDEzLjczMTNWMTYuMDMyQzYuMzczOTkgMTYuMTg0MSA2LjQyNzgyIDE2LjMxNzIgNi41MzU0OSAxNi40MzEzQzYuNjQzMTYgMTYuNTQ1MyA2Ljc3Mjk5IDE2LjYwMjQgNi45MjQ5OSAxNi42MDI0Wk0xMy4zMDkgOC40MjY0OUgxMC42NjhWNS43MjY1NUMxMC42MyA1LjA4MDA4IDEwLjQ0IDQuNDkwNjUgMTAuMDk4IDMuOTU4MjdDOS43NTU5OSAzLjQyNTg5IDkuMzAzMTYgMy4wMTM5MiA4LjczOTQ5IDIuNzIyMzhDOC4xNzU4MiAyLjQzMDg0IDcuNTcwOTkgMi4yOTc3NCA2LjkyNDk5IDIuMzIzMDlDNi4yNzg5OSAyLjI5Nzc0IDUuNjc0MTYgMi40MzA4NCA1LjExMDQ5IDIuNzIyMzhDNC41NDY4MiAzLjAxMzkyIDQuMDkzOTkgMy40MjU4OSAzLjc1MTk5IDMuOTU4MjdDMy40MDk5OSA0LjQ5MDY1IDMuMjE5OTkgNS4wODAwOCAzLjE4MTk5IDUuNzI2NTVWOC40MjY0OUgwLjU0MDk5QzAuMzg4OTkgOC40MjY0OSAwLjI1OTE1NyA4LjQ4MzUzIDAuMTUxNDkgOC41OTc2MUMwLjA0MzgyMzYgOC43MTE3IC0wLjAxMDAwOTggOC44NDQ3OSAtMC4wMTAwMDk4IDguOTk2OVYxNi4xMDhDLTAuMDEwMDA5OCAxNy4wNTg3IDAuMjI0MzI0IDE3LjkzMzMgMC42OTI5OSAxOC43MzE5QzEuMTYxNjYgMTkuNTMwNSAxLjc5NDk5IDIwLjE2NDMgMi41OTI5OSAyMC42MzMzQzMuMzkwOTkgMjEuMTAyMyA0LjI2NDk5IDIxLjMzNjggNS4yMTQ5OSAyMS4zMzY4SDguNjM0OTlDOS41ODQ5OSAyMS4zMzY4IDEwLjQ1OSAyMS4xMDIzIDExLjI1NyAyMC42MzMzQzEyLjA1NSAyMC4xNjQzIDEyLjY4ODMgMTkuNTMwNSAxMy4xNTcgMTguNzMxOUMxMy42MjU3IDE3LjkzMzMgMTMuODYgMTcuMDU4NyAxMy44NiAxNi4xMDhWOC45OTY5QzEzLjg2IDguODQ0NzkgMTMuODA2MiA4LjcxMTcgMTMuNjk4NSA4LjU5NzYxQzEzLjU5MDggOC40ODM1MyAxMy40NjEgOC40MjY0OSAxMy4zMDkgOC40MjY0OVpNNC4yODM5OSA1LjcyNjU1QzQuMzIxOTkgNS4yODI4OSA0LjQ2NDQ5IDQuODgwNDQgNC43MTE0OSA0LjUxOTE3QzQuOTU4NDkgNC4xNTc5MiA1LjI3ODMyIDMuODc5MDUgNS42NzA5OSAzLjY4MjU3QzYuMDYzNjYgMy40ODYxIDYuNDgxNjYgMy40MDY4NyA2LjkyNDk5IDMuNDQ0OUM3LjM2ODMyIDMuNDA2ODcgNy43ODYzMiAzLjQ4NjEgOC4xNzg5OSAzLjY4MjU3QzguNTcxNjYgMy44NzkwNSA4Ljg5MTQ5IDQuMTU3OTIgOS4xMzg0OSA0LjUxOTE3QzkuMzg1NDkgNC44ODA0NCA5LjUyNzk5IDUuMjgyODkgOS41NjU5OSA1LjcyNjU1VjguNDI2NDlINC4zMDI5OUw0LjI4Mzk5IDUuNzI2NTVaTTEyLjczOSAxNi4xMDhDMTIuNzM5IDE2Ljg1NTkgMTIuNTU1MyAxNy41NDM2IDEyLjE4OCAxOC4xNzFDMTEuODIwNyAxOC43OTg1IDExLjMyMzUgMTkuMjk2IDEwLjY5NjUgMTkuNjYzNkMxMC4wNjk1IDIwLjAzMTIgOS4zODIzMiAyMC4yMTUgOC42MzQ5OSAyMC4yMTVINS4yMTQ5OUM0LjQ2NzY2IDIwLjIxNSAzLjc4MDQ5IDIwLjAzMTIgMy4xNTM0OSAxOS42NjM2QzIuNTI2NDkgMTkuMjk2IDIuMDI5MzIgMTguNzk4NSAxLjY2MTk5IDE4LjE3MUMxLjI5NDY2IDE3LjU0MzYgMS4xMTA5OSAxNi44NTU5IDEuMTEwOTkgMTYuMTA4VjkuNTQ4M0gxMi43NThMMTIuNzM5IDE2LjEwOFoiIGZpbGw9IiMwNzEwMjEiLz4KPC9zdmc+Cg=="); height: 23px; width: 14px; background-repeat: no-repeat;  background-position: center;  background-size: contain;}
+.pt-adminlogin-box .form-control{font-size: 13px; line-height: 20px; font-weight: 400; height: auto; padding: 15px 4.076em; margin: 0;   border-radius: 26px; border: 1px solid #E4E4E4; color: #7A7E83; background: #fff; box-shadow: 0 3px 16px rgba(0, 0, 0, 0.02);    min-height: 40px; max-height: none;}
+.pt-adminlogin-box .btn{ font-size: 13px; margin: 0; line-height: 19px; font-weight: 600; letter-spacing: 0.06em;  text-transform: uppercase; float: none;  width: 100%; padding: 17px 0; border: none !important; border-radius: 27px; transition: all 0.3s ease; color: #fff;height: auto;    background-color: #1362B7; box-shadow: 0 7px 16px rgba(13, 75, 193, 0.2);}
+/* Admin Login CSS End */
+
+
+.pt-dashboard-wrapper { transition: all 0.25s ease-in; min-height: 100vh; position: relative;}
+.card {border: none; background: #fff; overflow: hidden; margin-bottom: 40px; padding: 44px; transition: all 0.3s ease; border-radius: 15px;  box-shadow: 0px 3px 20px rgba(29, 38, 38, 0.05);}
+.pt-nowrap{ white-space: nowrap;}
+.pt-gap-15 { gap: 15px; }
+
+/* -------- Panel Header CSS  -------- */
+.pt-dashboard-header{ position: fixed; top: 0; width: 100%; background: #fff; z-index: 9; min-height: 80px; padding-left: 330px;  transition: all .2s ease; box-shadow: 11px 3px 16px rgba(0, 0, 0, 0.05);}
+.pt-fullwidth-toggle .pt-dashboard-header { padding-left: 110px;}
+
+.pt-logo-site{ min-height: 80px; width: 330px; position: fixed; padding: 15px 37px; left: 0;transition: all .2s ease;}
+.pt-fullwidth-toggle .pt-logo-site{width: 110px;}
+.pt-logo-site .toggle-logo{display: none;}
+.pt-logo-site a {display: block;}
+.pt-fullwidth-toggle .pt-logo-site .toggle-logo{display: block;}
+.pt-fullwidth-toggle .pt-logo-site .desktop-logo{display: none;}
+.pt-logo-site img{height: 49px;}
+.pt-fullwidth-toggle .pt-logo-site {padding: 15px 0 15px 15px;}
+
+.pt-dashboard-header nav.navbar-expand {    padding: 15px 55px;}
+.pt-userlogout-ul li a.dropdown-toggle{ height: 50px; width: 50px;  border-radius: 50%;  padding: 0;  background: #ccc;  display: flex;    align-items: center;   justify-content: center;}
+
+/* -------- Panel Sidebar CSS -------- */
+.pt-dashboard-sidebar{width: 330px; padding: 60px 34px; height: calc(100% - 80px); position: fixed; top: 80px; z-index: 8; overflow: auto; transition: all .2s ease; background: #fcfcfc;box-shadow: 0px 79.715px 20px rgba(0, 0, 0, 0.1);}
+.pt-fullwidth-toggle .pt-dashboard-sidebar { width: 110px;}
+.scrollbar { scrollbar-width: thin; scrollbar-color: var(--light-blue) transparent;}
+.scrollbar::-webkit-scrollbar { width: 0px;height: 0px;}
+.scrollbar::-webkit-scrollbar-track { background-color: transparent;}
+.scrollbar::-webkit-scrollbar-thumb { background-color: var(--light-blue);}
+.scrollbar::-webkit-scrollbar-track, .scrollbar::-webkit-scrollbar-thumb { border-radius: 10px;}
+
+.pt-dashboard-sidebar .nav li {margin-bottom: 13px;}
+.pt-dashboard-sidebar .nav li a{color: #071021; position: relative; padding: 0px; display: flex; align-items: center; font-weight: 500;font-size: 14px;line-height: 21px;}
+.pt-dashboard-sidebar .nav li a:hover, .pt-dashboard-sidebar .nav li.active a{color: #1362B7;}
+.pt-dashboard-sidebar .nav li a:not(:only-child):after,.pt-dashboard-sidebar .nav li a:visited:not(:only-child):after { position: absolute; right: 0; top: 50%; margin-top: -6px; content: '' !important; display: inline-block;  vertical-align: -0.125em; background: url("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNyIgaGVpZ2h0PSIxMSIgdmlld0JveD0iMCAwIDcgMTEiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxwYXRoIGQ9Ik02LjQ4MTcyIDUuNzQzNTVDNi40ODE3MiA1LjgyNTY5IDYuNDUyMzkgNS44OTYwOSA2LjM5MzcyIDUuOTU0NzVMMS44MDAxMiAxMC41NDg0QzEuNzQxNDUgMTAuNjA3IDEuNjcxMDUgMTAuNjM2NCAxLjU4ODkyIDEwLjYzNjRDMS41MDY3OSAxMC42MzY0IDEuNDMwNTIgMTAuNjA3IDEuMzYwMTIgMTAuNTQ4NEwwLjg2NzMxOSAxMC4wNTU2QzAuNzk2OTE5IDkuOTg1MTUgMC43NjE3MTkgOS45MDg4OSAwLjc2MTcxOSA5LjgyNjc1QzAuNzYxNzE5IDkuNzQ0NjIgMC43OTY5MTkgOS42NjgzNSAwLjg2NzMxOSA5LjU5Nzk1TDQuNzIxNzIgNS43NDM1NUwwLjg2NzMxOSAxLjg3MTU1QzAuNzk2OTE5IDEuODEyODkgMC43NjE3MTkgMS43NDI0OSAwLjc2MTcxOSAxLjY2MDM1QzAuNzYxNzE5IDEuNTc4MjIgMC43OTY5MTkgMS41MDE5NSAwLjg2NzMxOSAxLjQzMTU1TDEuMzYwMTIgMC45Mzg3NTJDMS40MTg3OSAwLjg2ODM1MyAxLjQ5NTA1IDAuODMzMTUzIDEuNTg4OTIgMC44MzMxNTNDMS42ODI3OSAwLjgzMzE1MyAxLjc1MzE5IDAuODY4MzUzIDEuODAwMTIgMC45Mzg3NTJMNi4zOTM3MiA1LjUxNDc1QzYuNDUyMzkgNS41NzM0MiA2LjQ4MTcyIDUuNjQ5NjkgNi40ODE3MiA1Ljc0MzU1WiIgZmlsbD0iIzA3MTAyMSIvPgo8L3N2Zz4K"); height: 11px; width: 7px;     background-repeat: no-repeat;  margin-right: 0;  background-position: center;  background-size: contain;}
+.pt-fullwidth-toggle .pt-dashboard-sidebar .nav li a:not(:only-child):after,.pt-fullwidth-toggle .pt-dashboard-sidebar .nav li a:visited:not(:only-child):after {display: none;}
+.pt-dashboard-sidebar .nav-dropdown { display:none; padding-left: 30px; margin-top: 10px; }
+.pt-dashboard-sidebar .nav-dropdown li{list-style: none;}
+.pt-dashboard-sidebar .nav-dropdown li a{ padding: 0; position: relative; padding-left: 1.1em; }
+.pt-dashboard-sidebar .nav-dropdown li a:before{position: absolute; top: 50%; margin-top: -3px; height: 6px; width: 6px; background: #1362B7; border-radius: 50%; content: ""; left: 0;}
+.pt-dashboard-sidebar .nav li a span.nav-icon{width: 40px; display: flex; align-items: center; justify-content: center; height: 40px;background: #FFFFFF;box-shadow: 0px 3px 12px rgba(0, 0, 0, 0.04);border-radius: 8px; margin-right: 15px;}
+.pt-dashboard-sidebar .nav li a span.nav-text{ transition: opacity 0.3s ease; white-space: nowrap;}
+.pt-fullwidth-toggle .pt-dashboard-sidebar .nav li a span.nav-text{ display: none;}
+
+/* -------- Panel Content body CSS -------- */
+.pt-content-body{padding-top: 80px; position: relative; background: #F1F3F6; margin-left: 330px; min-height: calc(100vh - 49px); transition: all .2s ease; }
+.pt-fullwidth-toggle .pt-content-body {margin-left: 110px;}
+.pt-content-body > .container-fluid{padding: 60px; padding-bottom: 0px;}
+
+/* -------- Panel Footer CSS -------- */
+.pt-dashboard-footer{ background: #F1F3F6; transition: all .2s ease; width: 100%; padding-left: 375px; padding-top: 10px; padding-bottom: 80px;  }
+.pt-fullwidth-toggle .pt-dashboard-footer { padding-left: 110px;}
+.pt-dashboard-footer .copyright{color: #9C9DA1; font-size: 14px; letter-spacing: 1px; line-height: 24px;}
+.pt-dashboard-footer .copyright a{color: #1362B7;}
+
+/* Dashboard Comman */
+.pt-page-title { font-size: 28px; font-weight: 600; line-height: 32px; text-align: left; text-underline-position: from-font; text-decoration-skip-ink: none;  margin-bottom: 30px;}
+.pt-page-title.pt-title-border{padding-bottom: 20px; border-bottom: 1px solid #E4E4E4; }
+.breadcrumb .breadcrumb-item { font-size: 14px; font-weight: 500; line-height: 24px; text-align: left; text-underline-position: from-font; text-decoration-skip-ink: none; }
+.breadcrumb .breadcrumb-item { color: #071021; }
+.breadcrumb .breadcrumb-item a { color: #1362B7; }
+.pt-tbl-responsive { border: 1px solid #E4E4E4; border-radius: 5px; box-shadow: 0px 5px 30px 0px rgb(0, 0, 0, 0.04); }
+/*.pt-tbl-responsive tbody th, .pt-tbl-responsive .table td { white-space: nowrap; } */
+.pt-tbl-responsive .table{margin-bottom: 0;}
+.pt-tbl-responsive .table tr td {    vertical-align: middle; font-size: 14px; font-weight: 500; line-height: 24px; text-align: left; text-underline-position: from-font; text-decoration-skip-ink: none; color: #071021; }
+.pt-tbl-responsive .table tr td a:not(.btn) { color: #071021; font-weight: normal; }
+.pt-tbl-responsive .table tr:first-child td, .pt-tbl-responsive .table tr:first-child th { white-space: nowrap; font-size: 12px; font-weight: 500; line-height: 24px; letter-spacing: 0px; text-align: left; text-underline-position: from-font; text-decoration-skip-ink: none; background-color: #F9FAFC; color: #071021; text-transform: uppercase; }
+.pt-tbl-responsive .table tr:first-child th { border-top: none; }
+
+.pt-tbl-responsive .pt-w-100 { min-width: 100px; }
+.pt-cta { padding: 11px 20px; border-radius: 99px; }
+.pt-cta i { font-size: 12px; }
+/* .pt-tbl-responsive .table tr td span { display: block; box-sizing: border-box; max-width: 220px; white-space: break-spaces; min-width: 220px; } */
+
+/* dispatch Page  */
+.pt-card-header h3 { font-size: 28px; font-weight: 600; line-height: 32px; text-align: left; text-underline-position: from-font; text-decoration-skip-ink: none; color: #071021; }
+.pt-card-header.pt-border-bottom { padding-bottom: 20px; margin-bottom: 40px; border-bottom: 1px solid #E4E4E4; }
+.pt-form-field,
+.pt-datatbl input[type="search"] { height: 50px; border-radius: 99px; padding: 13px 20px; font-size: 14px; border: 1px solid #E4E4E4; }
+select.form-control, .pt-datatbl select { background-image: url("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTEiIGhlaWdodD0iNiIgdmlld0JveD0iMCAwIDExIDYiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxwYXRoIGQ9Ik01LjE2NjI0IDUuNzcxNjdDNS4wODQxIDUuNzcxNjcgNS4wMTM3IDUuNzQyMzMgNC45NTUwNCA1LjY4MzY3TDAuMzYxNDM3IDEuMDkwMDdDMC4zMDI3NzEgMS4wMzE0IDAuMjczNDM3IDAuOTYxIDAuMjczNDM3IDAuODc4ODY2QzAuMjczNDM3IDAuNzk2NzMzIDAuMzAyNzcxIDAuNzIwNDY2IDAuMzYxNDM3IDAuNjUwMDY2TDAuODU0MjM3IDAuMTU3MjY2QzAuOTI0NjM3IDAuMDg2ODY2MyAxLjAwMDkgMC4wNTE2NjYzIDEuMDgzMDQgMC4wNTE2NjYzQzEuMTY1MTcgMC4wNTE2NjYzIDEuMjQxNDQgMC4wODY4NjYzIDEuMzExODQgMC4xNTcyNjZMNS4xNjYyNCA0LjAxMTY3TDkuMDM4MjQgMC4xNTcyNjdDOS4wOTY5IDAuMDg2ODY2NiA5LjE2NzMgMC4wNTE2NjY2IDkuMjQ5NDQgMC4wNTE2NjY3QzkuMzMxNTcgMC4wNTE2NjY3IDkuNDA3ODQgMC4wODY4NjY3IDkuNDc4MjQgMC4xNTcyNjdMOS45NzEwNCAwLjY1MDA2N0MxMC4wNDE0IDAuNzA4NzMzIDEwLjA3NjYgMC43ODUgMTAuMDc2NiAwLjg3ODg2N0MxMC4wNzY2IDAuOTcyNzMzIDEwLjA0MTQgMS4wNDMxMyA5Ljk3MTA0IDEuMDkwMDdMNS4zOTUwNCA1LjY4MzY3QzUuMzM2MzcgNS43NDIzMyA1LjI2MDEgNS43NzE2NyA1LjE2NjI0IDUuNzcxNjdaIiBmaWxsPSIjOUM5REExIi8+Cjwvc3ZnPg=="); background-repeat: no-repeat; background-size: auto; background-position: right 20px center; padding-right: 32px; -moz-appearance: none; -webkit-appearance: none; }
+.pt-datatbl select { height: 50px; border-radius: 99px; padding: 13px 20px; font-size: 14px; border: 1px solid #E4E4E4; padding-right: 42px; margin: 0 10px; }
+select.pt-form-field::-ms-expand { display: none; }
+.pt-datatbl #dataTable_length label { font-size: 14px; font-weight: 500; line-height: 24px; text-align: left; text-underline-position: from-font; text-decoration-skip-ink: none; text-transform: capitalize; }
+
+.pt-datatbl table { margin: 0 !important; margin-bottom: 30px !important; }
+.pt-datatbl table thead tr th { /*white-space: nowrap;*/ background-color: #F9FAFC; font-size: 12px; font-weight: 500; line-height: 24px; text-align: left; text-underline-position: from-font; text-decoration-skip-ink: none; color: #071021; text-transform: uppercase; border: none; padding-left: 20px; }
+.pt-datatbl table tfoot tr td { background-color: #F9FAFC; font-size: 14px; font-weight: 500; line-height: 24px; text-align: left; text-underline-position: from-font; text-decoration-skip-ink: none; border: none; border-top: 1px solid #E4E4E4; }
+.pt-datatbl table tfoot tr td strong { font-weight: 500; }
+.pt-datatbl table tbody tr td { font-size: 14px; font-weight: 500; line-height: 24px; text-underline-position: from-font; text-decoration-skip-ink: none; color: #071021; }
+.pt-datatbl table.dataTable thead .sorting:after,
+.pt-datatbl table.dataTable thead .sorting_asc:after,
+.pt-datatbl table.dataTable thead .sorting_desc:after,
+.pt-datatbl table.dataTable thead .sorting_asc_disabled:after,
+.pt-datatbl table.dataTable thead .sorting_desc_disabled:after { right: 5px; }
+.pt-datatbl table.dataTable thead .sorting:before,
+.pt-datatbl table.dataTable thead .sorting_asc:before,
+.pt-datatbl table.dataTable thead .sorting_desc:before,
+.pt-datatbl table.dataTable thead .sorting_asc_disabled:before,
+.pt-datatbl table.dataTable thead .sorting_desc_disabled:before { right: 14px; }
+.pt-datatbl .dataTables_info { font-size: 14px; font-weight: 500; line-height: 24px; text-align: left; text-underline-position: from-font; text-decoration-skip-ink: none; color: #7A7E83; padding: 0 !important; }
+.dataTables_paginate .paginate_button { font-size: 14px; font-weight: 400; line-height: 24px; text-align: left; text-underline-position: from-font; text-decoration-skip-ink: none; margin: 0 5px; }
+.dataTables_paginate .paginate_button.disabled { color: #7A7E83; }
+
+.pt-datatbl tbody tr td { font-size: 14px; font-weight: 500; line-height: 24.03px; text-align: left; text-underline-position: from-font; text-decoration-skip-ink: none; color: #071021; }
+.pt-datatbl tbody tr td a:not(.btn) { color: #071021; }
+.pt-datatbl tbody tr td strong { font-weight: 500; }
+
+.pt-labelslelectrip .form-control{ margin-left: 10px; height: auto; width: auto;  padding: 6px 14px; font-size: 13px; padding-right: 32px;}
+.custom-checkbox .custom-control-label {margin-bottom: 0 !important}
+
+.pt-invoice-page .td-input{display:none;}
+.pt-invoice-page .fas {cursor: pointer;}
+.pt-invoice-page .fa {cursor: pointer;font-size: 26px;margin-top: 5px;}
+.pt-invoice-page a.btn {margin-bottom: 5px;}
+
+.pt-calendar-table  .table tr:nth-child(2) th{ white-space: nowrap;font-size: 12px;font-weight: 500;line-height: 24px;letter-spacing: 0px;text-align: left;text-underline-position: from-font;text-decoration-skip-ink: none;background-color: #F9FAFC;color: #071021;text-transform: uppercase;}
+
+.pt-calendar-table.pt-tbl-responsive .table tr:first-child th {vertical-align: baseline;}
+
+@media (max-width: 1680px) {
+	.pt-content-body > .container-fluid {  padding: 45px;  padding-bottom: 0px;}
+	.pt-dashboard-footer{ padding-left: 360px; padding-bottom: 60px;  }
+}
+@media (max-width: 1400px) {
+	.pt-content-body > .container-fluid {  padding: 30px;  padding-bottom: 0px;}
+	.card{padding: 30px;}
+	.pt-dashboard-footer{ padding-left: 345px; padding-bottom: 50px;  }
+}
+@media (max-width: 1199px) {
+	.pt-logo-site, .pt-fullwidth-toggle .pt-logo-site { width: 140px; padding: 15px 15px;}
+	.pt-dashboard-header, .pt-fullwidth-toggle .pt-dashboard-header {padding-left: 140px;}
+	.pt-content-body, .pt-fullwidth-toggle .pt-content-body { margin-left: 0px;}
+	.pt-dashboard-sidebar{left: -300px; width: 300px;}
+	.pt-fullwidth-toggle .pt-dashboard-sidebar{left: 0; width: 300px;}
+	.pt-dashboard-footer, .pt-fullwidth-toggle .pt-dashboard-footer{padding-left: 30px; padding-right: 30px; }
+	.pt-fullwidth-toggle .pt-dashboard-sidebar .nav li a span.nav-text{display: block;}
+	.pt-logo-sitediv {order: 2}
+	.pt-dashboard-footer .container-fluid{padding: 0;}
+}
+@media (max-width: 767px) {
+        /* Admin Login CSS */
+        .pt-adminlogin-box{padding: 40px 30px;}
+
+        .pt-dashboard-header nav.navbar-expand {  padding: 15px 15px;}
+        .pt-content-body > .container-fluid {  padding: 20px;  padding-bottom: 0px;}
+        .card{padding: 20px;}
+        .pt-dashboard-footer .copyright{letter-spacing: 0px; line-height: 20px; font-size: 12px;}
+
+        .table td, .table th{padding: 8px;}
+        .pt-tbl-responsive .table tr:first-child td, .pt-tbl-responsive .table tr:first-child th{letter-spacing: 0px;}
+        .pt-tbl-responsive .table tr td, .pt-datatbl table tbody tr td{font-size: 12px; line-height: 20px;}
+        .pt-cta { padding: 7px 14px; font-size: 12px; line-height: 20px;}
+        .table .pt-cta { padding: 5px 12px;}
+
+        .pt-page-title, .pt-card-header h3 { font-size: 22px;  line-height: 26px;  margin-bottom: 20px;}
+        .pt-page-title.pt-title-border{padding-bottom: 15px;}
+
+        .form-control, .pt-form-field, .pt-datatbl input[type="search"] { height: 42px;  padding: 9px 15px; font-size: 13px;}
+        .form-control, .pt-form-field {width: 100% !important;}
+        .pt-card-header.pt-border-bottom{flex-wrap: wrap;}
+}

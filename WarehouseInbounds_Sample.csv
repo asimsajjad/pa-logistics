@@ -1,0 +1,3 @@
+inbound_id,bound_id,"Date In",Customer,Warehouse,Sublocation,"Material Number","Lot Number","Pallet Number","Pallet Position","Pallet Quantity","Pieces Quantity"
+,,6/30/2025,"Customer A","Warehhouse A","Sublocation A",Material-001,"Lot A","Pallet A","Pallet Position A",1,50
+,,6/30/2025,"Customer B","Warehouse B","Sublocation B",Material-002,"Lot B","Pallet B","Pallet Positon B",1,30
