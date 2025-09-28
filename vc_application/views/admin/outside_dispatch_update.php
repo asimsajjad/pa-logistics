@@ -1147,11 +1147,21 @@
 								</div>
 										<div class="row expense-cls">
 											<?php
+											// echo "<pre>";
+											// print_r($expenses);exit;
 												$e = 1;
 												$paRate = $disp['parate'];
 												if($dispatchMeta['expense']) { 
 													foreach($dispatchMeta['expense'] as $expVal) {
 														$e++;
+														$selectedExpenseTitle = $expVal[0];
+														$showDaysInput = false;
+														foreach ($expenses as $exp) {
+															if ($exp['title'] == $selectedExpenseTitle && strtolower($exp['days_input']) == 'yes') {
+																$showDaysInput = true;
+																break;
+															}
+														}
 														//if($expVal[0] == 'Discount') { $paRate = $paRate + $expVal[1]; }
 														if(in_array($expVal[0],$expenseN)){ $paRate = $paRate + $expVal[1]; }
 														else { $paRate = $paRate - $expVal[1]; }
@@ -1170,7 +1180,39 @@
 																	?>
 																</select>
 															</div>
-															<input <?php if($disp['carrierPayoutCheck']=='1') { echo ' readonly'; }?> name="expensePrice[]" data-cls=".expenseName-<?=$e?>" required type="number" min="1" class="form-control expenseAmt" value="<?=$expVal[1]?>" step="0.01">
+															<div class="d-flex gap-2 align-items-center">
+																<input 
+																	<?php if($disp['carrierPayoutCheck']=='1') { echo ' readonly'; }?> 
+																	name="expensePrice[]" 
+																	data-cls=".expenseName-<?=$e?>" 
+																	required 
+																	type="number" 
+																	min="1" 
+																	class="form-control expenseAmt" 
+																	value="<?=$expVal[1]?>" 
+																	step="0.01" 
+																	style="width: <?= $showDaysInput ? '60%' : '100%' ?>;"
+																>
+
+																<?php if ($showDaysInput): ?>
+																	<input 
+																		name="expenseDays[]" 
+																		type="number" 
+																		min="1" 
+																		class="form-control expenseDays" 
+																		placeholder="Days" 
+																		style="width: 38%;" 
+																		value="<?= isset($expVal[2]) ? $expVal[2] : '' ?>"
+																	>
+																<?php else: ?>
+																	<input 
+																		name="expenseDays[]" 
+																		type="hidden" 
+																		class="form-control expenseDays" 
+																		value="0"
+																	>
+																<?php endif; ?>
+															</div>
 														</div>
 													</div>
 													<?php }
@@ -2463,36 +2505,73 @@
 			}
 		});
 		
-		$('body').on('keyup', '.carrierExpenseAmt', function(){
-			let cls = $(this).attr('data-cls');
-			if($(cls).val() == 'FSC (Fuel Surcharge)'){
-				let $this = $(this); // Capture $(this) to use inside setTimeout
-				
-				clearTimeout(timeoutID); // Clear any existing timer
-				
-				timeoutID = setTimeout(function(){
-					let surcharge = $this; // Use the captured value of $(this)
-					let samt = surcharge.val();
-					if(samt == '' || samt == 'undefined' || samt == 'NaN' || isNaN(samt)) { samt = 0; }
+		// $('body').on('keyup', '.carrierExpenseAmt', function(){
+		// 	let cls = $(this).attr('data-cls');
+		// 	if($(cls).val() == 'FSC (Fuel Surcharge)'){
+		// 		let $this = $(this); 
+		// 		clearTimeout(timeoutID);
+		// 		timeoutID = setTimeout(function(){
+		// 			let surcharge = $this; 
+		// 			let samt = surcharge.val();
+		// 			if(samt == '' || samt == 'undefined' || samt == 'NaN' || isNaN(samt)) { samt = 0; }
 					
-					$(".carrierExpenseAmt").each(function(index) {
-						let insideCls = $(this).attr('data-cls');
-						if($(insideCls).val() == 'Line Haul') {
-							let amt = $(this).val();
-							if(amt == '' || amt == 'undefined' || amt == 'NaN' || isNaN(amt)) { amt = 0; }
-							let result = (samt / 100) * amt;
-							//surcharge.val(result.toFixed(2));
-							surcharge.val(parseFloat(result).toFixed(2));
-							//surcharge.val(Math.round(result));
-						}
-					});
+		// 			$(".carrierExpenseAmt").each(function(index) {
+		// 				let insideCls = $(this).attr('data-cls');
+		// 				if($(insideCls).val() == 'Line Haul') {
+		// 					let amt = $(this).val();
+		// 					if(amt == '' || amt == 'undefined' || amt == 'NaN' || isNaN(amt)) { amt = 0; }
+		// 					let result = (samt / 100) * amt;
+		// 					surcharge.val(parseFloat(result).toFixed(2));
+		// 				}
+		// 			});
+					
+		// 			calculateCarrierRate();
+		// 		}, 2000);
+		// 		} else {
+		// 		calculateCarrierRate();
+		// 	}
+		// });
+		
+		$('body').on('keyup', '.carrierExpenseAmt', function () {
+			let cls = $(this).attr('data-cls');
+			let type = $(cls).val();
+			if (type == 'FSC (Fuel Surcharge)' || type == 'QP Fee') {
+				let $this = $(this); 
+				clearTimeout(timeoutID); 
+				timeoutID = setTimeout(function () {
+					let field = $this;
+					let percentVal = field.val();
+					if (percentVal == '' || percentVal == 'undefined' || percentVal == 'NaN' || isNaN(percentVal)) { 
+						percentVal = 0; 
+					}
+
+					if (type == 'FSC (Fuel Surcharge)') {
+						$(".carrierExpenseAmt").each(function () {
+							let insideCls = $(this).attr('data-cls');
+							if ($(insideCls).val() == 'Line Haul') {
+								let amt = $(this).val();
+								if (amt == '' || amt == 'undefined' || amt == 'NaN' || isNaN(amt)) { amt = 0; }
+								let result = (percentVal / 100) * amt;
+								field.val(parseFloat(result).toFixed(2));
+							}
+						});
+					}
+
+					let startRate = <?= isset($rate) ? (float)$rate : 0 ?>;
+					if (type == 'QP Fee') {
+						let rateVal = startRate;
+						if (rateVal == '' || rateVal == 'undefined' || rateVal == 'NaN' || isNaN(rateVal)) { rateVal = 0; }
+						let result = (percentVal / 100) * rateVal;
+						field.val(parseFloat(result).toFixed(2));
+					}
+
 					calculateCarrierRate();
 				}, 2000);
-				} else {
+			} else {
 				calculateCarrierRate();
 			}
 		});
-		
+
 		$('body').on('click','.expenseAmt',function(){
 			calculatePaRate();
 		});
@@ -2501,9 +2580,35 @@
 			calculateCarrierRate();
 		});
 
-		$('body').on('change','.expenseNameSelect',function(){
+		$('body').on('change', '.expenseNameSelect', function () {
 			calculatePaRate();
+			var selected = $(this).val();
+			var container = $(this).closest('.form-group').find('.d-flex');
+			var priceInput = container.find('.expenseAmt');
+			var daysInput = container.find('.expenseDays');
+
+			var needsDays = expenseMeta.some(function (exp) {
+				return exp.title === selected && exp.days_input.toLowerCase() === 'yes';
+			});
+
+			if (daysInput.length === 0) {
+				container.append('<input name="expenseDays[]" type="hidden" class="form-control expenseDays" value="0">');
+				daysInput = container.find('.expenseDays');
+			}
+
+			if (needsDays) {
+				daysInput.attr('type', 'number')
+					.attr('min', '1')
+					.attr('placeholder', 'Days')
+					.val('');
+				priceInput.css('width', '60%');
+				daysInput.css('width', '38%').show();
+			} else {
+				daysInput.attr('type', 'hidden').val(0);
+				priceInput.css('width', '100%');
+			}
 		});
+
 		
 		$('body').on('change','.carrierExpenseNameSelect',function(){
 			calculateCarrierRate();
@@ -2565,20 +2670,44 @@
 			$('.childInvoice-cls').append(expenseDiv);
 		});
 		
-		$('.expense-btn').click(function(){
-			var expenseDiv = '<div class="col-sm-3 expense-div-'+dcid+'">\
-			<div class="form-group">\
-			<div style="display: inline;color:#ff0047;" class="custom-checkbox my-1 mr-sm-2">\
-			<button class="btn btn-danger btn-sm pick-drop-btn pick-drop-remove-btn" data-removecls=".expense-div-'+dcid+'" type="button" style="top:0px;">X</button>\
-			<select name="expenseName[]" class="expenseNameSelect expenseName-'+dcid+'" style="padding: 3px;margin: 3px; width: 210px;">\
-			<?php foreach($expenses as $exp) { echo '<option value="'.$exp['title'].'">'.$exp['title'].'</option>'; } ?>\
-			</select>\
-			</div>\
-			<input name="expensePrice[]" data-cls=".expenseName-'+dcid+'" required type="number" min="0" class="form-control expenseAmt" value="0" step="0.01">\
-			</div>\
-			</div>';
-			dcid++;
+		var expenseMeta = <?= json_encode($expenses) ?>;
+		// $('.expense-btn').click(function(){
+		// 	var expenseDiv = '<div class="col-sm-3 expense-div-'+dcid+'">\
+		// 	<div class="form-group">\
+		// 	<div style="display: inline;color:#ff0047;" class="custom-checkbox my-1 mr-sm-2">\
+		// 	<button class="btn btn-danger btn-sm pick-drop-btn pick-drop-remove-btn" data-removecls=".expense-div-'+dcid+'" type="button" style="top:0px;">X</button>\
+		// 	<select name="expenseName[]" class="expenseNameSelect expenseName-'+dcid+'" style="padding: 3px;margin: 3px; width: 210px;">\
+		// 	<?php foreach($expenses as $exp) { echo '<option value="'.$exp['title'].'">'.$exp['title'].'</option>'; } ?>\
+		// 	</select>\
+		// 	</div>\
+		// 	<input name="expensePrice[]" data-cls=".expenseName-'+dcid+'" required type="number" min="0" class="form-control expenseAmt" value="0" step="0.01">\
+		// 	</div>\
+		// 	</div>';
+		// 	dcid++;
+		// 	$('.expense-cls').append(expenseDiv);
+		// });
+		$('.expense-btn').click(function() {
+			var expenseOptions = '';
+			expenseMeta.forEach(function(exp) {
+				expenseOptions += '<option value="' + exp.title + '">' + exp.title + '</option>';
+			});
+			var expenseDiv = `
+				<div class="col-sm-3 expense-div-${dcid}">
+					<div class="form-group">
+						<div style="display: inline;color:#ff0047;" class="custom-checkbox my-1 mr-sm-2">
+							<button class="btn btn-danger btn-sm pick-drop-btn pick-drop-remove-btn" data-removecls=".expense-div-${dcid}" type="button" style="top:0px;">X</button>
+							<select name="expenseName[]" class="expenseNameSelect expenseName-${dcid}" style="padding: 3px;margin: 3px; width: 210px;">
+								${expenseOptions}
+							</select>
+						</div>
+						<div class="d-flex gap-2 align-items-center mt-2">
+							<input name="expensePrice[]" data-cls=".expenseName-${dcid}" required type="number" min="0" class="form-control expenseAmt" value="0" step="0.01" style="width: 100%;">
+						</div>
+					</div>
+				</div>
+			`;
 			$('.expense-cls').append(expenseDiv);
+			dcid++;
 		});
 
 		$('.carrier-expense-btn').click(function(){

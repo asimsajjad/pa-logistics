@@ -4,13 +4,14 @@ $info = $invoice[0];
 $dispatchMeta = json_decode($info['dispatchMeta'],true);
 $invoicePDF = $cExpense = '';
 $expense = array();
+
 if($expName){
     for($e=0;count($expName)>$e;$e++){
         if(array_key_exists($expName[$e],$expense)){
 			$expense[$expName[$e]]['price'] = $expense[$expName[$e]]['price'] + $expPrice[$e];
 			$expense[$expName[$e]]['unit'][] = $expPrice[$e];
 		} else {
-			$expense[$expName[$e]] = array('price'=>$expPrice[$e],'unit'=>array($expPrice[$e]));
+			$expense[$expName[$e]] = array('price'=>$expPrice[$e],'unit'=>array($expPrice[$e]), 'days'=>array($expDays[$e]));
 		}
     }
     if($childTrailer){
@@ -34,8 +35,9 @@ if($expName){
     				if(array_key_exists($cVal[0],$expense)){
     					$expense[$cVal[0]]['price'] = $expense[$cVal[0]]['price'] + $cVal[1];
     					$expense[$cVal[0]]['unit'][] = $cVal[1];
+						$expense[$cVal[0]]['days'][] = $cVal[2];
     				} else {
-    					$expense[$cVal[0]] = array('price'=>$cVal[1],'unit'=>array($cVal[1]));
+    					$expense[$cVal[0]] = array('price'=>$cVal[1],'unit'=>array($cVal[1]), 'days'=>array($cVal[2]));
     				}
     			}
     		}
@@ -47,15 +49,20 @@ if($expName){
     		if(array_key_exists($expVal[0],$expense)){
     			$expense[$expVal[0]]['price'] = $expense[$expVal[0]]['price'] + $expVal[1];
     			$expense[$expVal[0]]['unit'][] = $expVal[1];
+				$expense[$expVal[0]]['days'][] = $expVal[2];
     		} else {
-    			$expense[$expVal[0]] = array('price'=>$expVal[1],'unit'=>array($expVal[1]));
+    			$expense[$expVal[0]] = array('price'=>$expVal[1],'unit'=>array($expVal[1]),'days'=>array($expVal[2]));
     		}
     	}
     }
-}
 
+}
+// 	echo "<pre>";
+// print_r($expense);exit;
 
 if($dispatchMeta['invoicePDF'] == 'Trucking') { $invoicePDF = 'Trucking'; }
+$drayageType = $dispatchMeta['drayageType'];
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -227,8 +234,10 @@ table tr.notes table{margin-bottom:5px;width:100%;max-width:1000px;}
 								if($bookingno != '') { echo '<strong>'.$bookingnoLabel.': '.$bookingno.'</strong><br>'; }
 								if($dispatchMeta['dispatchInfo']) { 
 									foreach($dispatchMeta['dispatchInfo'] as $diVal) { 
-										if($diVal[0]=='Booking No' && $invoicePDF != 'Trucking' && $bookingno == '') { echo '<strong>'.$diVal[0].': '.$diVal[1].'</strong><br>'; }
-										//if($diVal[0]=='BOL #' && $invoicePDF != 'Trucking') { echo '<strong>'.$diVal[0].': '.$diVal[1].'</strong><br>'; }
+										// if($diVal[0]=='Booking No' && $invoicePDF != 'Trucking' && $bookingno == '') { echo '<strong>'.$diVal[0].': '.$diVal[1].'</strong><br>'; }
+										if($drayageType == 'Import'){
+											if($diVal[0]=='BOL #' && $invoicePDF != 'Trucking') { echo '<strong>'.$diVal[0].': '.$diVal[1].'</strong><br>'; }
+										}
 										//if($diVal[0]=='Container No' && $invoicePDF != 'Trucking') { echo '<strong>'.$diVal[0].': '.$diVal[1].'</strong><br>'; }
 									}
 								}
@@ -271,12 +280,23 @@ table tr.notes table{margin-bottom:5px;width:100%;max-width:1000px;}
 											echo '<strong>' . $trailerValLabel . ': ';
 										} elseif ($invoicePDF == 'Trucking') {
 											echo '<strong>Trailer No.: ';
-										} else {
+										} 
+										else {
 											echo '<strong>Container No.: ';
 										}
 										echo implode(', ', $filteredTrailers);
 										echo '</strong><br>';
 									}
+									if($dispatchMeta['dispatchInfo']) { 
+										foreach($dispatchMeta['dispatchInfo'] as $diVal) { 
+											if($drayageType == 'Export'){
+												if($diVal[0]=='Booking No' && $invoicePDF != 'Trucking' && $bookingno == '') { echo '<strong>'.$diVal[0].': '.$diVal[1].'</strong><br>'; }
+											}
+											if($diVal[0]=='Seal No' && $invoicePDF != 'Trucking' && $bookingno == '') { echo '<strong>'.$diVal[0].': '.$diVal[1].'</strong><br>'; }
+											
+										}
+									}
+									
                                     ?>
                             </td>
                         </tr>
@@ -353,27 +373,25 @@ table tr.notes table{margin-bottom:5px;width:100%;max-width:1000px;}
 									 } else {
 										$trCount++;
 										echo '<tr><td></td><td></td><td align="right">'.$key.'';
+
 										if($cExpense == 'true' && count($expVal['unit']) > 1){ 
 											echo ' ('.implode(' + ',$expVal['unit']).') '; 
 										}
+										// print_r($expVal['days']);exit;
+				       					if (!empty($expVal['days'])) {
+											$daysTotal = is_array($expVal['days']) ? array_sum($expVal['days']) : $expVal['days'];
+											if ($daysTotal > 0) {
+												echo ' x '.$daysTotal.' day'.($daysTotal > 1 ? 's' : '');
+											}
+										}
+
 										echo '</td><td align="right">';
 										 $totalAmt = $totalAmt + $expVal['price'];
 										echo '$ '.number_format($expVal['price'],2).'</td></tr>';
 									 }
 								}
 							}
-							/*if($dispatchMeta['expense']) { 
-								foreach($dispatchMeta['expense'] as $expVal) {
-									 if($expVal[0]=='Discount'){
-										$disAmt = $disAmt - $expVal[1];
-									 } else {
-										$trCount++;
-										echo '<tr><td></td><td></td><td align="right">'.$expVal[0].'</td><td align="right">';
-										 $totalAmt = $totalAmt + $expVal[1];
-										echo '$ '.number_format($expVal[1],2).'</td></tr>';
-									 }
-								}
-							}*/
+														
 							for($c=$trCount;$c<4;$c++) {
 								echo '<tr><td>&nbsp;</td><td></td><td></td><td></td></tr>';
 							}
@@ -383,16 +401,22 @@ table tr.notes table{margin-bottom:5px;width:100%;max-width:1000px;}
 							<?php if($disAmt > 0) { echo '<tr><td colspan="3" align="right"><strong>Discount</strong></td><td  align="right">$ '.number_format($disAmt,2).'</td></tr>'; } ?> 
 							<tr><td colspan="3" align="right"><strong>Total Amount Due</strong></td><td align="right"><strong>$ <?=number_format(($totalAmt - $disAmt),2)?></strong></td></tr>
 						<?php }
-						else {  //////////// Trucking format ////////////
+						else {  //////////// Trucking format ///////////////
 						    $discountAmt = $subtotal = $totalAmt = 0;
 							$tr = $emptyTr = '';
-							if($expense) { 
+							if($expense) {  
 								
-								//echo '<tr><td colspan="3" align="right"><strong>Subtotal</strong></td><td align="right">$ '.$info['parate'].'</td></tr>';
 								foreach($expense as $key=>$expVal) {
-									 $tr .= '<tr><td colspan="3" align="right"><strong>'.$key.'</strong>';
-										if($cExpense == 'true' && count($expVal['unit']) > 1){ $tr .= ' ('.implode(' + ',$expVal['unit']).') '; }
-										$tr .= '</td><td  align="right">';
+									 $tr .= '<tr><td colspan="3" align="right"><strong>'.$key.'';
+									if($cExpense == 'true' && count($expVal['unit']) > 1)
+										{ $tr .= ' ('.implode(' + ',$expVal['unit']).') '; }
+									if (!empty($expVal['days'])) {
+										$daysTotal = is_array($expVal['days']) ? array_sum($expVal['days']) : $expVal['days'];
+										if ($daysTotal > 0) {
+											$tr .= ' x ' . $daysTotal . ' Day' . ($daysTotal > 1 ? 's' : '');
+										}
+									}
+										$tr .= '</strong></td><td  align="right">';
 									 if($key=='Discount'){ 
 										$discountAmt = $discountAmt + $expVal['price'];
 									 } else {

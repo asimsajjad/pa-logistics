@@ -30,6 +30,13 @@
 						</select>
 					</div> 
 					<div class="form-group">
+							<label for="contain">Days Input</label>
+							<select name="days_input" class="form-control" required>
+								<option value="yes">Yes</option>
+								<option value="no">No</option>
+							</select>
+						</div> 
+					<div class="form-group">
 						<label for="contain">Status</label>
 						<select name="status" class="form-control" required>
 							<option value="Active">Active</option>

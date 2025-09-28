@@ -885,6 +885,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 					$insert_data=array(
 					'title'=>$this->input->post('title'),
 					'type'=>$this->input->post('type'),
+					'days_input'=>$this->input->post('days_input'),
 					'status'=>$this->input->post('status')
 					);
 					$res = $this->Comancontroler_model->add_data_in_table($insert_data,'expenses'); 
@@ -910,6 +911,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 					$insert_data = array(
 					'title'=>$this->input->post('title'),
 					'type'=>$this->input->post('type'),
+					'days_input'=>$this->input->post('days_input'),
 					'status'=>$this->input->post('status')
 					);
 					$res = $this->Comancontroler_model->update_table_by_id($id,'expenses',$insert_data); 

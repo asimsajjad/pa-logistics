@@ -14,7 +14,8 @@
 					<tr>
 						<th>Sr.No</th>
 						<th>Expense</th>  
-						<th>Type</th>  
+						<th>Type</th> 
+						<th>Days Input</th>  
 						<th>Status</th>  
 						<th>Action</th>
 					</tr>				
@@ -29,6 +30,7 @@
 								<td><?php echo $n;?></td>
 								<td><a href="<?php echo base_url().'admin/expense/update/'.$key['id'];?>"><?php echo $key['title'];?></a></td>  
 								<td><?php echo $key['type'];?></td>  
+								<td><?php echo $key['days_input'];?></td>  
 								<td><?php echo $key['status'];?></td>  
 								<td><a class="btn btn-sm btn-success pt-cta" href="<?php echo base_url().'admin/expense/update/'.$key['id'];?>">Edit <i class="fas fa-edit" title="Edit" alt="Edit"></i></a> 
 								<a style="color:#ff0000;" class="ml-2"  href="<?php echo base_url().'admin/expense/delete/'.$key['id'];?>" onclick="return confirm('Are you sure delete this shipment ?')" ><i class="fas fa-trash-alt" title="Delete" alt="Delete"></i></a></td></tr> 

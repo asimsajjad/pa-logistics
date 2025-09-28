@@ -22,8 +22,6 @@ class OutSideDispatch extends CI_Controller {
 		// ini_set('display_errors', 1);
 		// error_reporting(E_ERROR);
 	}
-	
-	
 	public function outsideDispatchUpdate() {
 
 		//echo "<pre>"; print_r($_POST); die();
@@ -35,7 +33,7 @@ class OutSideDispatch extends CI_Controller {
 
         $data['dispatchInfo'] = $this->Comancontroler_model->get_data_by_column('status','Active','dispatchInfo','title','title','asc');
         //$data['expenses'] = $this->expenses;
-        $data['expenses'] = $this->Comancontroler_model->get_data_by_column('status','Active','expenses','title,type','title','asc');
+        $data['expenses'] = $this->Comancontroler_model->get_data_by_column('status','Active','expenses','title,type,days_input','title','asc');
         $data['carrierExpenses'] = $this->Comancontroler_model->get_data_by_column('status','Active','expenses','title,type','title','asc');
 		$data['shipmentStatus'] = $this->Comancontroler_model->get_data_by_column('status','Active','shipmentStatus','title,`order`','order','asc');
 	    
@@ -558,6 +556,7 @@ class OutSideDispatch extends CI_Controller {
 				$dispatchMeta['carrierInvoiceCheck'] = $this->input->post('carrierInvoiceCheck');
 				$expenseName = $this->input->post('expenseName');
 				$expensePrice = $this->input->post('expensePrice');
+				$expenseDays = $this->input->post('expenseDays');
 
 				$carrierExpenseName = $this->input->post('carrierExpenseName');
 				$carrierExpensePrice = $this->input->post('carrierExpensePrice');
@@ -605,7 +604,7 @@ class OutSideDispatch extends CI_Controller {
 
 				if(is_array($expenseName)) {
 				    for($i=0;$i<count($expenseName);$i++){
-				        $dispatchMeta['expense'][] = array($expenseName[$i],$expensePrice[$i]);
+				        $dispatchMeta['expense'][] = array($expenseName[$i],$expensePrice[$i],$expenseDays[$i]);
 				    }
 				}
 				if(is_array($carrierExpenseName)) {
@@ -1425,8 +1424,6 @@ class OutSideDispatch extends CI_Controller {
     	$this->load->view('admin/outside_dispatch_update',$data);
     	$this->load->view('admin/layout/footer');
 	}
-		
-	
 	public function index_backup() {
 	    if(!checkPermission($this->session->userdata('permission'),'odispatch')){
 	        redirect(base_url('AdminDashboard'));   
@@ -5041,8 +5038,7 @@ class OutSideDispatch extends CI_Controller {
     	$this->load->view('admin/layout/sidebar');
     	$this->load->view('admin/upload-outside-dispatch-csv',$data);
     	$this->load->view('admin/layout/footer');
-    }
-		
+    }	
 	public function indexOld() {
 	    if(!checkPermission($this->session->userdata('permission'),'odispatch')){
 	        redirect(base_url('AdminDashboard'));   
@@ -5275,7 +5271,6 @@ class OutSideDispatch extends CI_Controller {
     	$this->load->view('admin/outsideDispatch',$data);
     	$this->load->view('admin/layout/footer');
 	}
-	
 	function isAddressExist($pudate,$check_pcity,$check_plocation,$check_paddress,$returnID='no'){
 		$date = '2024-08-24';
 		$return = false;
