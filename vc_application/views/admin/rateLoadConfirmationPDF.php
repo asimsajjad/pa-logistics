@@ -109,7 +109,8 @@
 							</tr>
 							<tr>
 								<td><strong>Phone #:</strong></td>
-								<td><?=$userinfo[0]['phone']?></td>
+								<!-- <td><?=$userinfo[0]['phone']?></td> -->
+								<td>(925) 430-5356</td>
 								<td><strong>Ship Date:</strong></td>
 								<td><?php echo date('m-d-Y',strtotime($disp['pudate'])); ?></td>
 							</tr>
@@ -123,10 +124,10 @@
 								<td><strong>Email:</strong></td>
 								<td colspan="3"><?= !empty($userinfo[0]['email']) ? $userinfo[0]['email'] . ', ' : '' ?> CC: ops@palogisticsgroup.com</td>
 							</tr>
-							<tr>
+							<!-- <tr>
 								<td><strong>W/O:</strong></td>
 								<td colspan="3"></td>
-							</tr>	
+							</tr>	 -->
 							</tr>
 						</table>
 						
