@@ -144,12 +144,19 @@
 				$agingFromVal = '';
 				$agingToVal = '';			
 			}
+			if($this->input->post('dispatchType') == 'warehouse_dispatch'){
+				$dispatchTable = 'warehouse_dispatch';
+			}else{
+				$dispatchTable = 'dispatchOutside';
+			}
 			?>
 			<form id="exportForm" action="<?= base_url('AccountPayableController/exportPayables') ?>" method="post">
 				<input type="hidden" name="export_invoice_ids" id="export_invoice_ids">
+				<input type="hidden" name="dispatchTable" value="<?= $dispatchTable ?>">
 			</form>
 			<form id="exportPdfForm" action="<?= base_url('AccountPayableController/exportPdfPayables') ?>" method="post">
 				<input type="hidden" name="export_pdf_invoice_ids" id="export_pdf_invoice_ids">
+				<input type="hidden" name="dispatchTable" value="<?= $dispatchTable ?>">
 			</form>
 			<form class="form form-inline" id="payableSearchForm" method="post" action="">
 			<input type="hidden" name="agingSearch" id="agingSearch" value="<?php echo $agingSearch; ?>">
@@ -164,6 +171,11 @@
 			<button type="button" id="exportAllPdfbtn" class="btn btn-danger p-cta ml-1" style="margin: 3px; display: none;" >
 				Export PDF
 			</button>
+			&nbsp;
+			<select name="dispatchType" id="dispatchType" class="form-control" style="max-width: 150px;">
+				<option value="outsideDispatch" <?php if($this->input->post('dispatchType') == 'outsideDispatch') { echo 'selected'; } ?>>PA Logistics</option>
+				<option value="warehouse_dispatch" <?php if($this->input->post('dispatchType') == 'warehouse_dispatch') { echo 'selected'; } ?>>PA Warehousing</option>
+			</select> 
 			&nbsp;
 			<select class="form-control select2 p-cta ml-1" name="truckingCompany[]" data-placeholder="Select Carrier" multiple="multiple" style="margin: 3px; max-width: 200px;">
 						<option value="">Select Carrier</option>
@@ -286,11 +298,11 @@
                                             Statement
                     			</button>
 								<div class="dropdown-menu" aria-labelledby="dropdownMenu2" style="padding: 10px;text-align: center;">
-									<a class="btn btn-sm btn-danger" href="<?php echo base_url('AccountPayableController/downloadPayableStatementPDF/'.$company['company_id']);?>?dTable=dispatchOutside&sdate=<?=$sdate?>&edate=<?=$edate?>&agingSearch=<?=$agingSearch?>&invoiceType=<?=$invoiceType?>&invoiceNo=<?=$invoiceNo?>&carrierInvoiceRefNo=<?=$carrierInvoiceRefNo?>&agingFrom=<?=$agingFromVal?>&agingTo=<?=$agingToVal?>">Statement All</a> 
+									<a class="btn btn-sm btn-danger" href="<?php echo base_url('AccountPayableController/downloadPayableStatementPDF/'.$company['company_id']);?>?dTable=<?= $dispatchTable ?>&sdate=<?=$sdate?>&edate=<?=$edate?>&agingSearch=<?=$agingSearch?>&invoiceType=<?=$invoiceType?>&invoiceNo=<?=$invoiceNo?>&carrierInvoiceRefNo=<?=$carrierInvoiceRefNo?>&agingFrom=<?=$agingFromVal?>&agingTo=<?=$agingToVal?>">Statement All</a> 
 
-									<a class="btn btn-sm btn-success" href="<?php echo base_url('AccountPayableController/downloadPayableStatementPDF/'.$company['company_id']);?>?sdate=<?=$sdate?>&edate=<?=$edate?>&agingSearch=<?=$agingSearch?>&invoiceType=<?=$invoiceType?>&invoiceNo=<?=$invoiceNo?>&carrierInvoiceRefNo=<?=$carrierInvoiceRefNo?>&agingFrom=<?=$agingFromVal?>&agingTo=<?=$agingToVal?>&generateCSV&dTable=dispatchOutside">Download CSV</a> 
+									<a class="btn btn-sm btn-success" href="<?php echo base_url('AccountPayableController/downloadPayableStatementPDF/'.$company['company_id']);?>?sdate=<?=$sdate?>&edate=<?=$edate?>&agingSearch=<?=$agingSearch?>&invoiceType=<?=$invoiceType?>&invoiceNo=<?=$invoiceNo?>&carrierInvoiceRefNo=<?=$carrierInvoiceRefNo?>&agingFrom=<?=$agingFromVal?>&agingTo=<?=$agingToVal?>&generateCSV&dTable=<?= $dispatchTable ?>">Download CSV</a> 
 
-									<a class="btn btn-sm btn-success" href="<?php echo base_url('AccountPayableController/downloadPayableStatementPDF/'.$company['company_id']);?>?sdate=<?=$sdate?>&edate=<?=$edate?>&agingSearch=<?=$agingSearch?>&invoiceType=<?=$invoiceType?>&invoiceNo=<?=$invoiceNo?>&carrierInvoiceRefNo=<?=$carrierInvoiceRefNo?>&agingFrom=<?=$agingFromVal?>&agingTo=<?=$agingToVal?>&generateXls&dTable=dispatchOutside">Download Excel</a> 
+									<a class="btn btn-sm btn-success" href="<?php echo base_url('AccountPayableController/downloadPayableStatementPDF/'.$company['company_id']);?>?sdate=<?=$sdate?>&edate=<?=$edate?>&agingSearch=<?=$agingSearch?>&invoiceType=<?=$invoiceType?>&invoiceNo=<?=$invoiceNo?>&carrierInvoiceRefNo=<?=$carrierInvoiceRefNo?>&agingFrom=<?=$agingFromVal?>&agingTo=<?=$agingToVal?>&generateXls&dTable=<?= $dispatchTable ?>">Download Excel</a> 
 									
                     			</div>
 										
@@ -312,7 +324,11 @@
 									<?php } ?>
 									<th>INVOICE</th>
 									<th>FACTORING COMPANY</th>
-									<th>DELIVERY DATE</th>
+									<?php if($dispatchTable=='warehouse_dispatch'){ ?>
+										<th>END DATE</th>
+									<?php }else { ?>
+										<th>DELIVERY DATE</th>
+									<?php } ?>
 									<th>CARRIER INVOICE DATE</th>
 									<th>CARRIER INVOICE REF NO </th>
 									<th>CARRIER RATE</th>
@@ -362,19 +378,33 @@
 										<?php if($company['company_id']== 4){?>
 											<td style="text-align: center; vertical-align: middle;"><?php echo $invoice['company']; ?></td>
 											<td style="text-align: center; vertical-align: middle;"><?php echo $bookedUnder; ?></td>
+										<?php } 
+										if($dispatchTable == 'warehouse_dispatch'){?>
+                                    		<td style="text-align: center; vertical-align: middle;"><a href="<?php echo base_url().'admin/paWarehouse/update/'.$invoice['id'];?>"><?php echo $invoice['invoice']; ?></td>
+										<?php }else {?>
+											<td style="text-align: center; vertical-align: middle;"><a href="<?php echo base_url().'admin/outside-dispatch/update/'.$invoice['id'];?>"><?php echo $invoice['invoice']; ?></td>
 										<?php } ?>
-                                    	<td style="text-align: center; vertical-align: middle;"><a href="<?php echo base_url().'admin/outside-dispatch/update/'.$invoice['id'];?>"><?php echo $invoice['invoice']; ?></td>
-
 										<td style="text-align: center; vertical-align: middle;"><?php echo $factoringCompany; ?></td>
-
-                                    	<td style="text-align: center; vertical-align: middle;"><?php echo date('m-d-Y',strtotime( $invoice['dodate'])); ?></td>
+										<?php if($dispatchTable=='warehouse_dispatch'){ ?>
+											<td style="text-align: center; vertical-align: middle;"><?php echo date('m-d-Y',strtotime( $invoice['edate'])); ?></td>
+										<?php }else { ?>
+											<td style="text-align: center; vertical-align: middle;"><?php echo date('m-d-Y',strtotime( $invoice['dodate'])); ?></td>
+										<?php } ?>                                    	
 										<td style="text-align: center; vertical-align: middle;">
 											<?php
-											if (isset($dispatchMeta['custInvDate']) && !empty($dispatchMeta['custInvDate'])) {
-												echo date('m-d-Y', strtotime($dispatchMeta['custInvDate']));
-											} else {
-												echo ''; 
-											}
+												if($dispatchTable == 'warehouse_dispatch'){
+													if (isset($invoice['custInvDate']) && !empty($invoice['custInvDate'])) {
+														echo date('m-d-Y', strtotime($invoice['custInvDate']));
+													} else {
+														echo ''; 
+													}
+												}else {
+													if (isset($dispatchMeta['custInvDate']) && !empty($dispatchMeta['custInvDate'])) {
+														echo date('m-d-Y', strtotime($dispatchMeta['custInvDate']));
+													} else {
+														echo ''; 
+													}
+												} 											
 											?>
 										</td>
 										<td style="text-align: center; vertical-align: middle;"><?php echo $invoice['carrierInvoiceRefNo'];?>
@@ -395,34 +425,53 @@
 										
 										<td style="text-align: center; vertical-align: middle;">
 											<?php
-											if (isset($dispatchMeta['invoicePaidDate']) && !empty($dispatchMeta['invoicePaidDate'])) {
-												echo date('m-d-Y', strtotime($dispatchMeta['invoicePaidDate']));
-											} else {
-												echo ''; 
-											}
-											?>
+												if($dispatchTable == 'warehouse_dispatch'){
+													if (!empty($invoice['invoicePaidDate'])  && $invoice['invoicePaidDate'] != '0000-00-00') {
+														echo date('m-d-Y', strtotime($invoice['invoicePaidDate']));
+													} else {
+														echo ''; 
+													}
+												}else {
+													if (isset($dispatchMeta['invoicePaidDate']) && !empty($dispatchMeta['invoicePaidDate'])) {
+														echo date('m-d-Y', strtotime($dispatchMeta['invoicePaidDate']));
+													} else {
+														echo ''; 
+													}
+												} 
+												?>
 										</td>
-										
 										<td class="">
 											<input type="date" id="proofdate_<?php echo $invoice['id']; ?>" name="proofdate" class="form-control datepicker" value="<?php echo $invoice['carrierPayoutDate']; ?>">
 										
 											<td class="d-flex align-items-center gap-2" style="width:222px">
 											<input type="file" id="gd_d<?php echo $invoice['id']; ?>" name="gd_d[]" class="form-control" multiple>
 											<?php if (!empty($invoice['documents'])) { ?>
-												<?php foreach ($invoice['documents'] as $document) { ?>
-													<a href="<?php echo base_url('assets/outside-dispatch/gd/' . $document['fileurl']); ?>" 
-													download="<?php echo $document['fileurl']; ?>" 
-													class="document-link"
-													data-invoice-id="<?php echo $invoice['id']; ?>" style="display:none;">
-													</a>
-												<?php } ?>
+												<?php foreach ($invoice['documents'] as $document) { 
+													if($dispatchTable == 'warehouse_dispatch'){?>
+														<a href="<?php echo base_url('assets/warehouse/gd/' . $document['fileurl']); ?>" 
+														download="<?php echo $document['fileurl']; ?>" 
+														class="document-link"
+														data-invoice-id="<?php echo $invoice['id']; ?>" style="display:none;">
+														</a>
+												<?php } else { ?>
+														<a href="<?php echo base_url('assets/outside-dispatch/gd/' . $document['fileurl']); ?>" 
+														download="<?php echo $document['fileurl']; ?>" 
+														class="document-link"
+														data-invoice-id="<?php echo $invoice['id']; ?>" style="display:none;">
+														</a>
+												<?php }
+											} ?>
 												<button class="btn btn-sm btn-info download-all-btn" data-invoice-id="<?php echo $invoice['id']; ?>">Download All</button>
 											<?php } else { ?>
 												<span>No files</span>
 											<?php } ?>
 										</td>
 										<td style="word-break: break-all;">
-											<a target="_blank" href="<?php echo base_url('assets/outside-dispatch/carrierInvoice/') . $invoice['carrierInvoice'] . '?id=' . rand(10,99); ?>">
+											<?php if($dispatchTable == 'warehouse_dispatch'){ ?>
+												<a target="_blank" href="<?php echo base_url('assets/warehouse/carrierInvoice/') . $invoice['carrierInvoice'] . '?id=' . rand(10,99); ?>">
+											<?php }else { ?>
+												<a target="_blank" href="<?php echo base_url('assets/outside-dispatch/carrierInvoice/') . $invoice['carrierInvoice'] . '?id=' . rand(10,99); ?>"></a>
+											<?php } ?>
 												<span>
 													<?php
 														$fileName = $invoice['carrierInvoice'];
@@ -640,7 +689,7 @@
 
 	$(document).on("click", ".updateInvoiceBtn", function() {
 		var invoiceId = $(this).data("invoice-id");
-		
+		var dispatchType = $('select[name="dispatchType"]').val();
 		var proofDate = $("#proofdate_" + invoiceId).val();
 		var fileInput = $("#gd_d" + invoiceId)[0];
 
@@ -652,6 +701,7 @@
 		var formData = new FormData();
 		formData.append("invoice_id", invoiceId);
 		formData.append("proofdate", proofDate);	
+		formData.append("distpatchType", dispatchType);
 		for (var i = 0; i < fileInput.files.length; i++) {
 			formData.append("gd_d[]", fileInput.files[i]);
 		}
@@ -730,6 +780,8 @@ $(document).ready(function() {
     $("#uploadForm").on("submit", function(e) {
         e.preventDefault(); 
         var formData = new FormData(this);
+		var dispatchType = $('select[name="dispatchType"]').val();
+		formData.append("distpatchType", dispatchType);
         formData.append("invoice_ids", JSON.stringify(selectedInvoices));
         $.ajax({
 			url: "<?php echo base_url('AccountPayableController/updateBulkInvoices'); ?>",
@@ -827,17 +879,21 @@ $(document).off('click', '.download-all-btn').on('click', '.download-all-btn', f
 		});
 	});
 	$(document).ready(function() {
+		let selectedDispatchType = $('select[name="dispatchType"]').val(); 
 		let selectedTruckingCompanies = $('select[name="truckingCompany[]"]').val(); 
 		let selectedFactoringCompanies = $('select[name="factoringCompany[]"]').val(); 
 		let selectedInvoiceType = $('select[name="invoiceType"]').val(); 
 		let invoice = $('input[name="invoiceNo"]').val();
 		let carrierInvoice = $('input[name="carrierInvoiceRefNo"]').val();
+		
 
         $.ajax({
             url: "<?php echo base_url('AccountPayableController/getAgingDaysCounts'); ?>",
             type: "POST",
             dataType: "json",
-			data : {truckingCompany: selectedTruckingCompanies,
+			data : {
+				dispatchType : selectedDispatchType,
+				truckingCompany: selectedTruckingCompanies,
 				factoringCompany: selectedFactoringCompanies,
 				invoiceType: selectedInvoiceType,
 				invoiceNo:invoice,
