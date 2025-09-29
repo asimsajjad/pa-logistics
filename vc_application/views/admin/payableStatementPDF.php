@@ -97,7 +97,11 @@ tr.top {
                                             Tracy, CA 95391
                                         </td>
                                         <td class="cls2" width="45%">
-                                            <strong>Carrier<br>
+											<?php if($table == 'warehouse_dispatch'){ ?>
+												 <strong>Service Provider<br>
+											<?php } else { ?>
+                                            	<strong>Carrier<br>
+											<?php } ?>
                                             <?=$company[0]['company']?></strong><br>
                                             <?php 
                                             echo $formattedAddress = preg_replace('/, ([^,]+, [A-Z]{2} \d{5})$/', '<br>$1', str_replace('--','',$company[0]['address']));
@@ -109,8 +113,11 @@ tr.top {
                                 </table>
                             </td>
 							<td style="text-align: left; vertical-align: top;">
-							<strong>Carrier Contact:</strong><br>
-                                <?php 
+								<?php if($table == 'warehouse_dispatch'){ ?>
+									<strong>Service Provider Contact:</strong><br>
+								<?php } else { ?>
+                                	<strong>Service Provider Contact:</strong><br>
+								<?php }
                                 if($company[0]['owner'] != '') { echo ''.$company[0]['owner'].'<br>'; }
 								if($company[0]['password'] != '') { echo '(O)&nbsp;'.$company[0]['password'].'<br>'; } 
                                  if($company[0]['email'] != '') { echo '(E)&nbsp;'.$company[0]['email'].'<br>'; } 
@@ -133,8 +140,12 @@ tr.top {
                         $thead .= '<thead>
                             <tr class="heading">';
 							   if($type == 'Drayage') { $colspan = 8; 
-								$thead .= '<td align="center">Delivery&nbsp;Date</td>
-    							<td>Invoice&nbsp;No.</td>
+								if($table == 'warehouse_dispatch'){
+									$thead .= '<td align="center">End&nbsp;Date</td>';
+								}else{
+									$thead .= '<td align="center">Delivery&nbsp;Date</td>';
+								}
+    							$thead .= '<td>Invoice&nbsp;No.</td>
 								<td>Carrier Ref &nbsp;No.</td>
     							<td>PO &nbsp;No.</td>
     							<td>Container&nbsp;No. / Trailer</td>
@@ -143,8 +154,12 @@ tr.top {
 								<td align="center">Due&nbsp;Date</td>
     							<td align="right">Amount</td>';
 							   } else { $colspan = 7; 
-    							$thead .= '<td align="center">Delivery&nbsp;Date</td>
-    							<td>Invoice&nbsp;No.</td>
+    							if($table == 'warehouse_dispatch'){
+									$thead .= '<td align="center">End&nbsp;Date</td>';
+								}else{
+									$thead .= '<td align="center">Delivery&nbsp;Date</td>';
+								}
+    							$thead .= '<td>Invoice&nbsp;No.</td>
 								<td>Carrier Ref No.</td>
     							<td>PO No.</td>
     							<td align="center">Invoice&nbsp;Date</td>
@@ -177,6 +192,10 @@ tr.top {
 								}
 								$allCarrierRefNos = implode(',', $carrierRefNos);
 								$allCustomerPONos = implode(',', $customerPONos);
+								if($table == 'warehouse_dispatch'){
+									$allCarrierRefNos = $dis['carrier_ref_no'];
+									$allCustomerPONos = $dis['po_no'];
+								}
 
 								// print_r($dispatchMeta ['dispatchInfo']);exit;
 								if(is_numeric($dispatchMeta['partialAmount'])) {
@@ -206,9 +225,14 @@ tr.top {
 								}
 								// echo $amount;exit;
 
-						        echo '<tr>
-						        <td align="center">'.date('m-d-Y',strtotime($dis['dodate'])).'</td>
-						        <td>'.$dis['invoice'].'</td>
+						        echo '<tr>';
+								if($table == 'warehouse_dispatch'){
+									echo '<td align="center">'.date('m-d-Y',strtotime($dis['edate'])).'</td>';
+								}else{
+									echo '<td align="center">'.date('m-d-Y',strtotime($dis['dodate'])).'</td>';
+								}
+						        
+						        echo '<td>'.$dis['invoice'].'</td>
 								<td class="wrap-text">'.str_replace(',', ',<br>', $allCarrierRefNos).'</td>
 								<td class="wrap-text">'.str_replace(',', ',<br>', $allCustomerPONos).'</td>';
 
@@ -216,7 +240,12 @@ tr.top {
 									echo '<td>'.str_replace('TBA','N/A',$dis['trailer']).'</td>';
 								}
 						        // echo '<td align="center">'.date('m-d-Y',strtotime($dis['invoiceDate'])).'</td><td align="center">';
-						        $invDate = !empty($dispatchMeta['custInvDate']) ? $dispatchMeta['custInvDate'] : '';
+								if($table == 'warehouse_dispatch'){
+									$invDate = !empty($dis['custInvDate']) ? $dis['custInvDate'] : '';
+								}else{
+									 $invDate = !empty($dispatchMeta['custInvDate']) ? $dispatchMeta['custInvDate'] : '';
+								}
+						       
 								echo '<td align="center">'.date('m-d-Y',strtotime($invDate)).'</td><td align="center">';
 
 									$invoiceType = '';
@@ -259,12 +288,21 @@ tr.top {
 									}
 									
 								echo '</td>
-									<td align="center">';
-								if (!empty($dispatchMeta['custDueDate'])) {
-									echo date('m-d-Y', strtotime($dispatchMeta['custDueDate']));
-								} else {
-									echo ''; 
+								<td align="center">';
+								if($table == 'warehouse_dispatch'){
+									if (!empty($dis['custDueDate'])) {
+										echo date('m-d-Y', strtotime($dis['custDueDate']));
+									} else {
+										echo ''; 
+									}
+								}else{
+									if (!empty($dispatchMeta['custDueDate'])) {
+										echo date('m-d-Y', strtotime($dispatchMeta['custDueDate']));
+									} else {
+										echo ''; 
+									}
 								}
+								
 								if($dis['bookedUnderNew']==4){
 									$rate = $dis['rate'] + $dis['agentRate'];
 								}else{
