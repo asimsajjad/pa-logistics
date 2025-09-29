@@ -18,9 +18,8 @@
 		<div class="d-block text-center">
 			<form class="form form-inline" method="post" action="">
 				<input type="text" required readonly placeholder="Starting Batch Date" value="<?php if($this->input->post('sdate')) { echo $sdate = $this->input->post('sdate'); } else { $sdate = date('Y-m-d',strtotime("-4 months",strtotime(date('Y-m-d')))); } ?>" name="sdate" style="width: 165px;" class="form-control datepicker"> &nbsp;
-				<input type="text" required style="width: 160px;" readonly placeholder="Ending Batch Date" value="<?php if($this->input->post('edate')) { echo $edate = $this->input->post('edate'); } else { $edate = date('Y-m-d'); } ?>" name="edate" class="form-control datepicker"> &nbsp;
-				
-				
+				<input type="text" required style="width: 160px;" readonly placeholder="Ending Batch Date" value="<?php if($this->input->post('edate')) { echo $edate = $this->input->post('edate'); } else { $edate = date('Y-m-d'); } ?>" name="edate" class="form-control datepicker"> 
+				&nbsp;				
 				<select name="dispatchType" required class="form-control" style="max-width: 150px;">
 					<option value="">Select Division</option>
 					<option value="paDispatch" <?php if($this->input->post('dispatchType') == 'paDispatch') { echo 'selected'; } ?>>PA Fleet Dispatch</option>
@@ -146,21 +145,6 @@
 </div>
 
 </div>
-
-
-<!-- <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-
-<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
-<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.css">
-<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.js"></script>
-
-<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
-<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
-
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script> -->
 
 <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 <link href="<?php echo base_url().'assets/css/select2.min.css'; ?>" rel="stylesheet">

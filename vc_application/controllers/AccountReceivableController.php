@@ -1291,7 +1291,6 @@ class AccountReceivableController extends CI_Controller {
 		$pdf->Output($output, "D");
 		exit;
 	}
-
 	public function getInvoiceFileUrls()
 	{
 		$id = $this->uri->segment(3);
@@ -1851,7 +1850,7 @@ class AccountReceivableController extends CI_Controller {
 			$file_url = FCPATH.'assets/paInvoice/';
 		} elseif ($dispatch_type == 'dispatchOutside') {
 			$document_table = 'documentsOutside';
-			$type = 'outside';
+			// $type = 'outside';
 			$file_url = FCPATH . 'assets/outside-dispatch/invoice/';
 		} elseif ($dispatch_type == 'warehouse_dispatch') {
 			$document_table = 'warehouse_documents';

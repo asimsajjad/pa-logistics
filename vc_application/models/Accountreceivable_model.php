@@ -282,12 +282,22 @@ class Accountreceivable_model extends CI_Model
 		if($company!='') { 
 			$where .= " AND a.company in  (" . implode(",", $company) . ")"; 
 		}
-		if ($agingFrom !== '' && $agingTo !== '') {
-			$where .= " AND DATEDIFF(JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.invoicePaidDate')), a.invoiceDate) BETWEEN $agingFrom AND $agingTo";
-		} elseif ($agingFrom !== '' && $agingTo === '') {
-			$where .= " AND DATEDIFF(JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.invoicePaidDate')), a.invoiceDate) >= $agingFrom";
-		} elseif ($agingFrom === '' && $agingTo !== '') {
-			$where .= " AND DATEDIFF(JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.invoicePaidDate')), a.invoiceDate) <= $agingTo";
+		if($table=='warehouse_dispatch'){
+			if ($agingFrom !== '' && $agingTo !== '') {
+				$where .= " AND DATEDIFF(a.invoicePaidDate, a.invoiceDate) BETWEEN $agingFrom AND $agingTo";
+			} elseif ($agingFrom !== '' && $agingTo === '') {
+				$where .= " AND DATEDIFF(a.invoicePaidDate, a.invoiceDate) >= $agingFrom";
+			} elseif ($agingFrom === '' && $agingTo !== '') {
+				$where .= " AND DATEDIFF(a.invoicePaidDate, a.invoiceDate) <= $agingTo";
+			}
+		}else{
+			if ($agingFrom !== '' && $agingTo !== '') {
+				$where .= " AND DATEDIFF(JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.invoicePaidDate')), a.invoiceDate) BETWEEN $agingFrom AND $agingTo";
+			} elseif ($agingFrom !== '' && $agingTo === '') {
+				$where .= " AND DATEDIFF(JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.invoicePaidDate')), a.invoiceDate) >= $agingFrom";
+			} elseif ($agingFrom === '' && $agingTo !== '') {
+				$where .= " AND DATEDIFF(JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.invoicePaidDate')), a.invoiceDate) <= $agingTo";
+			}
 		}
 
 		$select = '';
