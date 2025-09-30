@@ -44,12 +44,13 @@ class AccountPayableController extends CI_Controller
 			$agingFrom = $this->input->post('aging_from');
 			$agingTo = $this->input->post('aging_to');
 
-			if ($dispatchType == 'outsideDispatch') {
+			
+			if ($dispatchType == 'warehouse_dispatch') {
+				$table = 'warehouse_dispatch';
+			}else {
 				$table = 'dispatchOutside';
 				$data['dispatchURL'] = 'outside-dispatch';
-			} else {
-				$table = 'dispatch';
-			}
+			} 
 
 			$invoiceType = $this->input->post('invoiceType');
 
@@ -89,10 +90,15 @@ class AccountPayableController extends CI_Controller
 	public function updateInvoice(){
 		$id = $this->input->post('invoice_id');
 		$carrierPayoutDate = $this->input->post('proofdate');
-		$userId=$this->session->userdata('adminid');
-		$table = 'dispatchOutside';
-		$dispatchType = ($table == 'dispatchOutside') ? 'dispatchOutside' : 'dispatch';
+		$table=$this->input->post('distpatchType');
 
+		$userId=$this->session->userdata('adminid');
+		
+		if($table == 'dispatchOutside'){
+			$dispatchType = 'dispatchOutside';
+		}elseif($table == 'warehouse_dispatch'){
+			$dispatchType = 'warehouse_dispatch';
+		}
 		$batchSql = "SELECT MAX(id) as id, MAX(batchNo) as batchNo FROM payableBatches";
 		$lastBatch = $this->db->query($batchSql)->row();
 
@@ -102,7 +108,7 @@ class AccountPayableController extends CI_Controller
 		}
 
 		$sql_carrierPayoutDate = $this->db->select('carrierPayoutDate')
-                                    ->from('dispatchOutside')
+                                    ->from($table)
                                     ->where('id', $id)
                                     ->get();
         $existingCarrierPayoutDate = $sql_carrierPayoutDate->row()->carrierPayoutDate;
@@ -118,7 +124,12 @@ class AccountPayableController extends CI_Controller
 
 				$config['allowed_types'] = 'jpg|jpeg|png|gif|pdf|doc|docx|docm|xls|xlsx|xlsm';
 				$config['max_size'] = '5000';
-				$config['upload_path'] = 'assets/outside-dispatch/gd/';
+				
+				if($table == 'dispatchOutside'){
+					$config['upload_path'] = 'assets/outside-dispatch/gd/';
+				}elseif($table == 'warehouse_dispatch'){
+					$config['upload_path'] = 'assets/warehouse/gd/';
+				}
 				$config['file_name'] = time() . '-CARRIER-GD-' . uniqid();
 
 				$this->load->library('upload', $config);
@@ -133,7 +144,12 @@ class AccountPayableController extends CI_Controller
 						'fileurl' => $paymentProof,
 						'rdate' => date('Y-m-d H:i:s')
 					);
-					$this->Comancontroler_model->add_data_in_table($addfile, 'documentsOutside');
+
+					if ($table == 'dispatchOutside') {
+						$this->Comancontroler_model->add_data_in_table($addfile, 'documentsOutside');
+					} elseif($table == 'warehouse_dispatch'){
+						$this->Comancontroler_model->add_data_in_table($addfile, 'warehouse_documents');
+					}
 					// Log each uploaded file
 					$changeField[] = array("Carrier Payment proof file","gdfile", "Upload", $paymentProof);
 				} else {
@@ -147,17 +163,18 @@ class AccountPayableController extends CI_Controller
         if ($id){
 			// $sql = "UPDATE dispatchOutside SET `carrierPayoutDate` = '$carrierPayoutDate', carrierPayoutCheck=1, carrierGd='AK', batchId='$batchId' WHERE id=$id";
 			// $this->db->query($sql);
-			$totalAmount_sql="SELECT CASE WHEN a.bookedUnderNew = 4 THEN a.rate + a.agentRate ELSE a.rate END AS rate FROM dispatchOutside a WHERE `id`=$id";
+			$totalAmount_sql="SELECT CASE WHEN a.bookedUnderNew = 4 THEN a.rate + a.agentRate ELSE a.rate END AS rate FROM $table a WHERE `id`=$id";
 			// echo $totalAmount_sql;exit;
 			$totalAmount=$this->db->query($totalAmount_sql)->row()->rate;
 			// $totalAmount = $this->db->select('rate')->where('id', $id)->get('dispatchOutside')->row()->rate;
 
 			$paymentType = 'payable';
 			$insertBatch = "INSERT INTO payableBatches (addedBy, batchNo, dispatchType, totalAmount, paymentType) 
-						VALUES ('$userId', '$batchNo','dispatchOutside', '$totalAmount', '$paymentType')";
+						VALUES ('$userId', '$batchNo', '$dispatchType', '$totalAmount', '$paymentType')";
+				// echo $insertBatch;exit;		
 			$batchResult=$this->db->query($insertBatch);
 
-			$sql = "UPDATE dispatchOutside SET `carrierPayoutDate` = '$carrierPayoutDate', carrierPayoutCheck=1, carrierGd='AK', payableBatchId='$batchId' WHERE id=$id";
+			$sql = "UPDATE $table SET `carrierPayoutDate` = '$carrierPayoutDate', carrierPayoutCheck=1, carrierGd='AK', payableBatchId='$batchId' WHERE id=$id";
 			$this->db->query($sql);
 			// echo $sql;exit;
             $result = $this->db->query($sql);
@@ -165,7 +182,11 @@ class AccountPayableController extends CI_Controller
 				$userid = $this->session->userdata('logged');
 				$changeFieldJson = json_encode($changeField);
 				$aplog = array('did'=>$id,'userid'=>$userid['adminid'],'ip_address'=>getIpAddress(),'history'=>$changeFieldJson,'rDate'=>date('Y-m-d H:i:s'));
-				$this->Comancontroler_model->add_data_in_table($aplog,'dispatchOutsideLog'); 
+				if($table == 'warehouse_dispatch'){
+					$this->Comancontroler_model->add_data_in_table($aplog,'warehouse_dispatch_log');
+				}else{
+					$this->Comancontroler_model->add_data_in_table($aplog,'dispatchOutsideLog');
+				} 
 			}
 			if($result ){
 				
@@ -178,12 +199,16 @@ class AccountPayableController extends CI_Controller
 	public function updateBulkInvoices() {
 		$invoiceIds = json_decode($this->input->post('invoice_ids'), true);
 		$carrierPayoutDate = $this->input->post('proofdate');
-		$userId=$this->session->userdata('adminid');
-		// $fileUrl = '';
+		$dispatchType=$this->input->post('distpatchType');
 
-		$table = 'dispatchOutside';
-		$dispatchType = ($table == 'dispatchOutside') ? 'dispatchOutside' : 'dispatch';
-		$dispatchType = 'dispatchOutside' ;
+		$userId=$this->session->userdata('adminid');
+	
+		if($dispatchType == 'outsideDispatch'){
+			$table = 'dispatchOutside';
+		}elseif($dispatchType == 'warehouse_dispatch'){
+			$table = 'warehouse_dispatch';
+		}
+
 		$batchNo = $this->input->post('batchNo');
 		$batchId = $this->input->post('batchId');
 		$total_Amount = $this->input->post('total_Amount');
@@ -193,7 +218,12 @@ class AccountPayableController extends CI_Controller
 		if (!empty($_FILES['gd_d']['name'][0])) {
 			$config['allowed_types'] = 'jpg|jpeg|png|gif|pdf|doc|docx|xls|xlsx|xlsm';
 			$config['max_size'] = '5000';
-			$config['upload_path'] = 'assets/outside-dispatch/gd/';
+			if($table == 'dispatchOutside'){
+				$config['upload_path'] = 'assets/outside-dispatch/gd/';
+			}elseif($table == 'warehouse_dispatch'){
+				$config['upload_path'] = 'assets/warehouse/gd/';
+			}
+			
 			$this->load->library('upload', $config);
 		
 			foreach ($_FILES['gd_d']['name'] as $key => $value) {
@@ -221,18 +251,20 @@ class AccountPayableController extends CI_Controller
 			// $totalAmount = $this->db->get($table)->row()->rate;
 			$paymentType = 'payable';
 				$insertBatch = "INSERT INTO payableBatches (addedBy, dispatchType, batchNo, totalAmount, paymentType) 
-                    VALUES ('$userId', '$dispatchType', '$batchNo', '$total_Amount', '$paymentType')";
+                    VALUES ('$userId', '$table', '$batchNo', '$total_Amount', '$paymentType')";
 				$this->db->query($insertBatch);	
 
 			foreach ($invoiceIds as $id) {
 				$changeField = [];
-				$sql_carrierPayoutDate = $this->db->select('carrierPayoutDate')
-                                    ->from('dispatchOutside')
-                                    ->where('id', $id)
-                                    ->get();
-        		$existingCarrierPayoutDate = $sql_carrierPayoutDate->row()->carrierPayoutDate;
+				// $sql_carrierPayoutDate = $this->db->select('carrierPayoutDate')
+                //                     ->from($table)
+                //                     ->where('id', $id)
+                //                     ->get();
+				$sql_carrierPayoutDate = "SELECT carrierPayoutDate FROM $table WHERE id=$id";
+				$query_carrierPayoutDate = $this->db->query($sql_carrierPayoutDate);
+        		$existingCarrierPayoutDate = $query_carrierPayoutDate->row()->carrierPayoutDate;
 				// Update dispatchOutside table for each invoice
-				$sql = "UPDATE dispatchOutside SET `carrierPayoutDate` = '$carrierPayoutDate', carrierPayoutCheck=1, carrierGd='AK', payableBatchId='$batchId' WHERE id=$id";
+				$sql = "UPDATE $table SET `carrierPayoutDate` = '$carrierPayoutDate', carrierPayoutCheck=1, carrierGd='AK', payableBatchId='$batchId' WHERE id=$id";
 				$this->db->query($sql);
 	
 				if (!empty($uploadedFiles)) {
@@ -243,7 +275,11 @@ class AccountPayableController extends CI_Controller
 							'fileurl' => $fileUrl,
 							'rdate' => date('Y-m-d H:i:s')
 						);
-						$this->Comancontroler_model->add_data_in_table($addfile,'documentsOutside');
+						if ($table == 'dispatchOutside') {
+							$this->Comancontroler_model->add_data_in_table($addfile, 'documentsOutside');
+						} elseif($table == 'warehouse_dispatch'){
+							$this->Comancontroler_model->add_data_in_table($addfile, 'warehouse_documents');
+						}
 						// Log each file upload
 						$changeField[] = array("Carrier Payment proof file", "gdfile", "Upload", $fileUrl);
 					}
@@ -256,10 +292,13 @@ class AccountPayableController extends CI_Controller
 			   if($changeField) {
 				   $changeFieldJson = json_encode($changeField);
 				   $aplog = array('did'=>$id,'userid'=>$userid['adminid'],'ip_address'=>getIpAddress(),'history'=>$changeFieldJson,'rDate'=>date('Y-m-d H:i:s'));
-				   $this->Comancontroler_model->add_data_in_table($aplog,'dispatchOutsideLog'); 
-			   }
+					if($table == 'warehouse_dispatch'){
+						$this->Comancontroler_model->add_data_in_table($aplog,'warehouse_dispatch_log');
+					}else{
+						$this->Comancontroler_model->add_data_in_table($aplog,'dispatchOutsideLog');
+					} 
+			    }
 			   // To here log entry
-
 			}
 	
 			$this->session->set_flashdata('item', 'Invoices updated successfully.');
@@ -292,10 +331,18 @@ class AccountPayableController extends CI_Controller
 		$table = 'dispatch';
 		$extraTable = 'dispatchExtraInfo';
 		$data['type'] = '';
+		$data['table'] = '';
 
 		if (isset($_GET['dTable']) && $_GET['dTable'] == 'dispatchOutside') {
 			$table = 'dispatchOutside';
 			$extraTable = 'dispatchOutsideExtraInfo';
+			$data['table'] = $table;
+
+		}
+		if (isset($_GET['dTable']) && $_GET['dTable'] == 'warehouse_dispatch') {
+			$table = 'warehouse_dispatch';
+			$extraTable = 'warehouse_dispatch_extra_info';
+			$data['table'] = $table;
 		}
 		if (isset($_GET['type']) && $_GET['type'] != '') {
 			$data['type'] = $_GET['type'];
@@ -323,9 +370,17 @@ class AccountPayableController extends CI_Controller
 
 			if ($data['type'] == 'Drayage') {
 				$colspan = 6;
-				$heading = array('Dilevery Date', 'Invoice No.', 'Cust Ref. No.', 'Container No. / Trailer', 'Invoice Date', 'Inv. Aging (Days)', 'Due Date', 'Amount');
+				if($table == 'warehouse_dispatch'){
+					$heading = array('End Date', 'Invoice No.', 'Cust Ref. No.', 'Container No. / Trailer', 'Invoice Date', 'Inv. Aging (Days)', 'Due Date', 'Amount');
+				}else{
+					$heading = array('Dilevery Date', 'Invoice No.', 'Cust Ref. No.', 'Container No. / Trailer', 'Invoice Date', 'Inv. Aging (Days)', 'Due Date', 'Amount');
+				}
 			} else {
-				$heading = array('Dilevery Date', 'Invoice No.', 'Cust Ref. No.', 'Invoice Date', 'Inv. Aging (Days)', 'Due Date', 'Amount');
+				if($table == 'warehouse_dispatch'){
+					$heading = array('End Date', 'Invoice No.', 'Cust Ref. No.', 'Invoice Date', 'Inv. Aging (Days)', 'Due Date', 'Amount');
+				}else{
+					$heading = array('End Date', 'Invoice No.', 'Cust Ref. No.', 'Invoice Date', 'Inv. Aging (Days)', 'Due Date', 'Amount');
+				}
 			}
 			$csvExcel = array($heading);
 
@@ -334,12 +389,27 @@ class AccountPayableController extends CI_Controller
 				$partialAmt = $amount = 0;
 				foreach ($data['invoice'] as $dis) {
 					$dispatchMeta = json_decode($dis['dispatchMeta'], true);
-					if (is_numeric($dispatchMeta['partialAmount'])) {
-						$partialAmt = $partialAmt + $dispatchMeta['partialAmount'];
+					if($table == 'warehouse_dispatch'){
+						if (is_numeric($dis['partialAmount'])) {
+							$partialAmt = $partialAmt + $dis['partialAmount'];
+						}
+					}else{
+						if (is_numeric($dispatchMeta['partialAmount'])) {
+							$partialAmt = $partialAmt + $dispatchMeta['partialAmount'];
+						}					
 					}
-					if ($data['type'] != '' && $dispatchMeta['invoicePDF'] != $data['type']) {
-						continue;
+					
+					if($table == 'warehouse_dispatch'){
+						if ($data['type'] != '' && $dis['invoicePDF'] != $data['type']) {
+							continue;
+						}
+					}else{
+						if ($data['type'] != '' && $dispatchMeta['invoicePDF'] != $data['type']) {
+							continue;
+						}
 					}
+
+					
 					if ($dis['pd_date'] != '' && (!strstr($dis['pd_date'], '0000'))) {
 						$dis['pudate'] = $dis['pd_date'];
 					}
@@ -349,7 +419,12 @@ class AccountPayableController extends CI_Controller
 						$rowArr[] = str_replace('TBA', 'N/A', $dis['trailer']);
 					}
 					// $rowArr[] = date('m-d-Y', strtotime($dis['invoiceDate']));
-					$rowArr[] = date('m-d-Y', strtotime($dispatchMeta['custInvDate']));
+					if($table == 'warehouse_dispatch'){
+						$rowArr[] = date('m-d-Y', strtotime($dis['custInvDate']));
+					}else{
+						$rowArr[] = date('m-d-Y', strtotime($dispatchMeta['custInvDate']));
+					}
+					
 
 					$invoiceType = $agingTxt = '';
 					$showAging = 'false';
@@ -365,19 +440,36 @@ class AccountPayableController extends CI_Controller
 					// if ($dis['invoiceDate'] != '0000-00-00') {
 					// 	$showAging = 'true';
 					// }
-					if (!empty($dispatchMeta['custInvDate']) && $dispatchMeta['custInvDate'] != '0000-00-00') {
-						$showAging = 'true';
-					}
+					if($table == 'warehouse_dispatch'){
+						if (!empty($dis['custInvDate']) && $dis['custInvDate'] != '0000-00-00') {
+							$showAging = 'true';
+						}
+						if ($dis['invoicePaidDate'] != '') {
+							$showAging = 'false';
+						}
+						if ($dis['invoiceCloseDate'] != '') {
+							$showAging = 'false';
+						}				
+					}else{
+						if (!empty($dispatchMeta['custInvDate']) && $dispatchMeta['custInvDate'] != '0000-00-00') {
+							$showAging = 'true';
+						}
 
-					if ($dispatchMeta['invoicePaidDate'] != '') {
-						$showAging = 'false';
+						if ($dispatchMeta['invoicePaidDate'] != '') {
+							$showAging = 'false';
+						}
+						if ($dispatchMeta['invoiceCloseDate'] != '') {
+							$showAging = 'false';
+						}
 					}
-					if ($dispatchMeta['invoiceCloseDate'] != '') {
-						$showAging = 'false';
-					}
+					
 					if ($showAging == 'true') {
 						// $date1 = new DateTime($dis['invoiceDate']);
-						$date1 = new DateTime($dispatchMeta['custInvDate']);
+						if($table == 'warehouse_dispatch'){
+							$date1 = new DateTime($dis['custInvDate']);
+						}else{
+							$date1 = new DateTime($dispatchMeta['custInvDate']);
+						}
 						$date2 = new DateTime(date('Y-m-d'));
 						$diff = $date1->diff($date2);
 						$aging = $diff->days;
@@ -390,12 +482,20 @@ class AccountPayableController extends CI_Controller
 					}
 
 					$rowArr[] = $agingTxt;
-					if (!empty($dispatchMeta['custDueDate'])) {
-						$rowArr[] = date('m-d-Y', strtotime($dispatchMeta['custDueDate']));
-
-					} else {
-						$rowArr[] = '';
+					if($table == 'warehouse_dispatch'){
+						if (!empty($dis['custDueDate'])) {
+							$rowArr[] = date('m-d-Y', strtotime($dis['custDueDate']));
+						} else {
+							$rowArr[] = '';
+						}
+					}else{
+						if (!empty($dispatchMeta['custDueDate'])) {
+							$rowArr[] = date('m-d-Y', strtotime($dispatchMeta['custDueDate']));
+						} else {
+							$rowArr[] = '';
+						}
 					}
+					
 
 					$rowArr[] = '$ ' . $dis['rate'];
 
@@ -409,7 +509,7 @@ class AccountPayableController extends CI_Controller
 				$rowArr[] = '';
 				$csvExcel[] = $rowArr;
 
-				$subTotalRow = array('', '', '');
+				$subTotalRow = array('', '', '','','');
 				if ($data['type'] == 'Drayage') {
 					$subTotalRow[] = '';
 				}
@@ -419,7 +519,7 @@ class AccountPayableController extends CI_Controller
 
 				$totalAmt = $amount;
 				if ($partialAmt > 0) {
-					$partialAmtRow = array('', '', '');
+					$partialAmtRow = array('', '', '','','');
 					if ($data['type'] == 'Drayage') {
 						$partialAmtRow[] = '';
 					}
@@ -429,7 +529,7 @@ class AccountPayableController extends CI_Controller
 					$totalAmt = $totalAmt - $partialAmt;
 				}
 
-				$totalRow = array('', '', '');
+				$totalRow = array('', '', '','','');
 				if ($data['type'] == 'Drayage') {
 					$totalRow[] = '';
 				}
@@ -498,13 +598,19 @@ class AccountPayableController extends CI_Controller
 		}
 
 		$company = $truckingCompany = $driver = $sdate = $edate = $agingFrom = $agingTo = '';
-		$table = 'dispatchOutside';
-		$data['dispatchURL'] = 'outside-dispatch';
+		// $table = 'dispatchOutside';
+		$dispatchType = $this->input->post('dispatchType');
+        if($dispatchType == 'outsideDispatch'){ 
+            $table = 'dispatchOutside'; 
+            $data['dispatchURL'] = 'outside-dispatch';
+        }else if($dispatchType == 'warehouse_dispatch'){
+			$table = 'warehouse_dispatch'; 
+            $data['dispatchURL'] = 'paWarehouse';
+		}
 		// $sdate = date('Y-m-d');
 		// $edate = date('Y-m-d');
 		$company = null;
 	
-
 		if($this->input->post('generateCSV') || $this->input->post('generateXls')){
             $truckingCompany = $this->input->post('truckingCompany');
 			if ($this->input->post('sdate')) {
@@ -517,7 +623,12 @@ class AccountPayableController extends CI_Controller
 			$agingTo = $this->input->post('aging_to');
       
             $dispatch = $this->Accountpayable_model->downloadPayableBatches($table,$sdate,$edate,$truckingCompany, $agingFrom, $agingTo);
-			$heading = array('Added By', 'Booked Under','Carrier','Carrier Payout Date','Batch No', 'Batch Date','Invoice','Carrier Ref #','Carrier Inv. Ref #','Delivery Date','Carrier Invoice Date','Carrier Rate','Payment Days');
+			if($table=='warehouse_dispatch'){
+				$heading = array('Added By', 'Booked Under','Carrier','Carrier Payout Date','Batch No', 'Batch Date','Invoice','Carrier Ref #','Carrier Inv. Ref #','End Date','Carrier Invoice Date','Service Provider Rate','Payment Days');
+			}else{
+				$heading = array('Added By', 'Booked Under','Carrier','Carrier Payout Date','Batch No', 'Batch Date','Invoice','Carrier Ref #','Carrier Inv. Ref #','Delivery Date','Carrier Invoice Date','Carrier Rate','Payment Days');
+			}
+			
 			$data = array($heading);
 			// print_r($dispatch);exit;
 			$totalRate = 0;
@@ -525,19 +636,32 @@ class AccountPayableController extends CI_Controller
 				foreach($dispatch as $row){
 					$dispatchMeta = json_decode($row['dispatchMeta'],true);
 				   	$dodate = $carrierInvoiceDate = $expectPayDate = $carrierPayoutDate = '0000-00-00';
-				   	if($row['dodate']!='0000-00-00') {
-   					   	$dodate = '="' . date('m-d-Y', strtotime($row['dodate'])) . '"';
-				   	}
+					if($table=='warehouse_dispatch'){
+						if($row['edate']!='0000-00-00') {
+							$dodate = '="' . date('m-d-Y', strtotime($row['edate'])) . '"';
+						}
+					}else{
+						if($row['dodate']!='0000-00-00') {
+							$dodate = '="' . date('m-d-Y', strtotime($row['dodate'])) . '"';
+						}
+					}				   
 				   	if($row['carrierPayoutDate']!='0000-00-00') {
 					   $carrierPayoutDate = '="' . date('m-d-Y', strtotime($row['carrierPayoutDate'])) . '"';
 				   	}
 				   	$batchDateBatchNo = date('mdY', strtotime($row['date'])) . $row['batchNo'];
 				   	$batcDate = date('m-d-Y h:i:s A', strtotime($row['date']));
+					
 				    $CarrierRefNo = '';
-					if($dispatchMeta['dispatchInfo'][0][0] == 'Carrier Ref No'){
-				    	$CarrierRefNo = $dispatchMeta['dispatchInfo'][0][1];
+					if($table=='warehouse_dispatch'){
+						$CarrierRefNo = $row['dispatchValue'];
+						$carrierInvDate = $row['custInvDate'];
+					}else{
+						if($dispatchMeta['dispatchInfo'][0][0] == 'Carrier Ref No'){
+							$CarrierRefNo = $dispatchMeta['dispatchInfo'][0][1];
+						}
+					    $carrierInvDate = $dispatchMeta['custInvDate'];
 					}
-				    $carrierInvDate = $dispatchMeta['custInvDate'];
+					
 					if(trim($carrierInvDate) != ''){ 
 						$carrierInvDate = '="' . date('m-d-Y', strtotime($carrierInvDate)) . '"';
 					}
@@ -578,7 +702,6 @@ class AccountPayableController extends CI_Controller
 			exit;
 			die('csv');
         }
-		
 
 		if ($this->input->post('search')) {
 			$truckingCompany = $this->input->post('truckingCompany');
@@ -590,8 +713,11 @@ class AccountPayableController extends CI_Controller
 			}
 			$agingFrom = $this->input->post('aging_from');
 			$agingTo = $this->input->post('aging_to');
-		}
-		$data['customersPayables'] = $this->Accountpayable_model->getPayableBatches($table,$sdate,$edate,$truckingCompany, $agingFrom, $agingTo);
+			$data['customersPayables'] = $this->Accountpayable_model->getPayableBatches($table,$sdate,$edate,$truckingCompany, $agingFrom, $agingTo);
+		}else {
+            $data['customersPayables'] = array();
+        }
+		
 		$data['truckingCompanies'] = $this->Comancontroler_model->get_data_by_table('truckingCompanies');
 		$this->load->view('admin/layout/header');
 		$this->load->view('admin/layout/sidebar');
@@ -634,6 +760,7 @@ class AccountPayableController extends CI_Controller
 	public function getAgingDaysCount()
 	{
 		$company = $truckingCompany = $factoringCompany = $driver = $sdate = $edate = $invoiceNo = $carrierInvoiceRefNo='';
+		$dispatchType = $this->input->post('dispatchType');
 		$truckingCompany = $this->input->post('truckingCompany');
 		$factoringCompany = $this->input->post('factoringCompany');
 		$invoiceType = $this->input->post('invoiceType');
@@ -669,41 +796,75 @@ class AccountPayableController extends CI_Controller
 		if($carrierInvoiceRefNo != ''){
 			$where .= " AND a.carrierInvoiceRefNo LIKE '%$carrierInvoiceRefNo%'";
 		}
-		$sql = "SELECT 
-		SUM(CASE WHEN DATEDIFF(CURDATE(), JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.custInvDate'))) BETWEEN 0 AND 15 THEN 1 ELSE 0 END) AS `zero_fifteen_days_count`,
-		SUM(CASE WHEN DATEDIFF(CURDATE(), JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.custInvDate'))) BETWEEN 0 AND 15 THEN (CASE WHEN a.bookedUnderNew = 4 THEN (a.rate + a.agentRate - IFNULL(a.carrierPartialAmt,0)) 
-          ELSE (a.rate - IFNULL(a.carrierPartialAmt,0))  END) ELSE 0 END) AS `zero_fifteen_days_amount`,
-		SUM(CASE WHEN DATEDIFF(CURDATE(), JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.custInvDate'))) BETWEEN 16 AND 30 THEN 1 ELSE 0 END) AS `fifteen_thirty_days_count`,
-		SUM(CASE WHEN DATEDIFF(CURDATE(), JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.custInvDate'))) BETWEEN 16 AND 30 THEN (CASE WHEN a.bookedUnderNew = 4 THEN (a.rate + a.agentRate - IFNULL(a.carrierPartialAmt,0)) 
-          ELSE (a.rate - IFNULL(a.carrierPartialAmt,0)) END) ELSE 0 END) AS `fifteen_thirty_days_amount`,
-		SUM(CASE WHEN DATEDIFF(CURDATE(), JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.custInvDate'))) BETWEEN 31 AND 35 THEN 1 ELSE 0 END) AS `thirty_thirty_five_days_count`,
-		SUM(CASE WHEN DATEDIFF(CURDATE(), JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.custInvDate'))) BETWEEN 31 AND 35 THEN (CASE WHEN a.bookedUnderNew = 4 THEN (a.rate + a.agentRate - IFNULL(a.carrierPartialAmt,0)) 
-          ELSE (a.rate - IFNULL(a.carrierPartialAmt,0)) END) ELSE 0 END) AS `thirty_thirty_five_days_amount`,
-		SUM(CASE WHEN DATEDIFF(CURDATE(), JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.custInvDate'))) BETWEEN 36 AND 45 THEN 1 ELSE 0 END) AS `thirty_five_forty_five_days_count`,
-		SUM(CASE WHEN DATEDIFF(CURDATE(), JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.custInvDate'))) BETWEEN 36 AND 45 THEN (CASE WHEN a.bookedUnderNew = 4 THEN (a.rate + a.agentRate - IFNULL(a.carrierPartialAmt,0)) 
-          ELSE (a.rate - IFNULL(a.carrierPartialAmt,0)) END) ELSE 0 END) AS `thirty_five_forty_five_days_amount`,
-		SUM(CASE WHEN DATEDIFF(CURDATE(), JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.custInvDate'))) BETWEEN 46 AND 60 THEN 1 ELSE 0 END) AS `forty_five_sixty_days_count`,
-		SUM(CASE WHEN DATEDIFF(CURDATE(), JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.custInvDate'))) BETWEEN 46 AND 60 THEN (CASE WHEN  a.bookedUnderNew = 4 THEN (a.rate + a.agentRate - IFNULL(a.carrierPartialAmt,0)) 
-          ELSE (a.rate - IFNULL(a.carrierPartialAmt,0)) END) ELSE 0 END) AS `forty_five_sixty_days_amount`,
-		SUM(CASE WHEN DATEDIFF(CURDATE(), JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.custInvDate'))) >60 THEN 1 ELSE 0 END) AS `sixty_days_count`,
-		SUM(CASE WHEN DATEDIFF(CURDATE(), JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.custInvDate'))) > 60 THEN (CASE WHEN a.bookedUnderNew = 4 THEN (a.rate + a.agentRate - IFNULL(a.carrierPartialAmt,0)) 
-          ELSE (a.rate - IFNULL(a.carrierPartialAmt,0)) END)	ELSE 0 END) AS `sixty_days_amount`
-		FROM dispatchOutside a
-		WHERE $where
-		 AND a.carrierPayoutDate = '0000-00-00' AND a.carrierPayoutCheck = '0' 
-		AND JSON_VALID(a.dispatchMeta)
-		AND JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.custInvDate')) IS NOT NULL
-		AND JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.custInvDate')) != ''
-		ORDER BY JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.custInvDate')) ASC
-		LIMIT 1000";	
+		if($dispatchType == 'warehouse_dispatch'){
+			$sql = "SELECT 
+				SUM(CASE WHEN DATEDIFF(CURDATE(), a.custInvDate) BETWEEN 0 AND 15 THEN 1 ELSE 0 END) AS `zero_fifteen_days_count`,
+				SUM(CASE WHEN DATEDIFF(CURDATE(), a.custInvDate) BETWEEN 0 AND 15 THEN (CASE WHEN a.bookedUnderNew = 4 THEN (a.rate + a.agentRate - IFNULL(a.carrierPartialAmt,0)) 
+				ELSE (a.rate - IFNULL(a.carrierPartialAmt,0))  END) ELSE 0 END) AS `zero_fifteen_days_amount`,
+				SUM(CASE WHEN DATEDIFF(CURDATE(), a.custInvDate) BETWEEN 16 AND 30 THEN 1 ELSE 0 END) AS `fifteen_thirty_days_count`,
+				SUM(CASE WHEN DATEDIFF(CURDATE(), a.custInvDate) BETWEEN 16 AND 30 THEN (CASE WHEN a.bookedUnderNew = 4 THEN (a.rate + a.agentRate - IFNULL(a.carrierPartialAmt,0)) 
+				ELSE (a.rate - IFNULL(a.carrierPartialAmt,0)) END) ELSE 0 END) AS `fifteen_thirty_days_amount`,
+				SUM(CASE WHEN DATEDIFF(CURDATE(), a.custInvDate) BETWEEN 31 AND 35 THEN 1 ELSE 0 END) AS `thirty_thirty_five_days_count`,
+				SUM(CASE WHEN DATEDIFF(CURDATE(), a.custInvDate) BETWEEN 31 AND 35 THEN (CASE WHEN a.bookedUnderNew = 4 THEN (a.rate + a.agentRate - IFNULL(a.carrierPartialAmt,0)) 
+				ELSE (a.rate - IFNULL(a.carrierPartialAmt,0)) END) ELSE 0 END) AS `thirty_thirty_five_days_amount`,
+				SUM(CASE WHEN DATEDIFF(CURDATE(), a.custInvDate) BETWEEN 36 AND 45 THEN 1 ELSE 0 END) AS `thirty_five_forty_five_days_count`,
+				SUM(CASE WHEN DATEDIFF(CURDATE(), a.custInvDate) BETWEEN 36 AND 45 THEN (CASE WHEN a.bookedUnderNew = 4 THEN (a.rate + a.agentRate - IFNULL(a.carrierPartialAmt,0)) 
+				ELSE (a.rate - IFNULL(a.carrierPartialAmt,0)) END) ELSE 0 END) AS `thirty_five_forty_five_days_amount`,
+				SUM(CASE WHEN DATEDIFF(CURDATE(), a.custInvDate) BETWEEN 46 AND 60 THEN 1 ELSE 0 END) AS `forty_five_sixty_days_count`,
+				SUM(CASE WHEN DATEDIFF(CURDATE(), a.custInvDate) BETWEEN 46 AND 60 THEN (CASE WHEN  a.bookedUnderNew = 4 THEN (a.rate + a.agentRate - IFNULL(a.carrierPartialAmt,0)) 
+				ELSE (a.rate - IFNULL(a.carrierPartialAmt,0)) END) ELSE 0 END) AS `forty_five_sixty_days_amount`,
+				SUM(CASE WHEN DATEDIFF(CURDATE(), a.custInvDate) >60 THEN 1 ELSE 0 END) AS `sixty_days_count`,
+				SUM(CASE WHEN DATEDIFF(CURDATE(), a.custInvDate) > 60 THEN (CASE WHEN a.bookedUnderNew = 4 THEN (a.rate + a.agentRate - IFNULL(a.carrierPartialAmt,0)) 
+				ELSE (a.rate - IFNULL(a.carrierPartialAmt,0)) END)	ELSE 0 END) AS `sixty_days_amount`
+				FROM warehouse_dispatch a
+				WHERE $where
+				AND a.carrierPayoutDate = '0000-00-00' AND a.carrierPayoutCheck = '0' 
+				AND (a.custInvDate != '' || a.custInvDate != '0000-00-00')
+				ORDER BY a.custInvDate ASC
+				LIMIT 1000";	
+		}else{
+			$sql = "SELECT 
+				SUM(CASE WHEN DATEDIFF(CURDATE(), JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.custInvDate'))) BETWEEN 0 AND 15 THEN 1 ELSE 0 END) AS `zero_fifteen_days_count`,
+				SUM(CASE WHEN DATEDIFF(CURDATE(), JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.custInvDate'))) BETWEEN 0 AND 15 THEN (CASE WHEN a.bookedUnderNew = 4 THEN (a.rate + a.agentRate - IFNULL(a.carrierPartialAmt,0)) 
+				ELSE (a.rate - IFNULL(a.carrierPartialAmt,0))  END) ELSE 0 END) AS `zero_fifteen_days_amount`,
+				SUM(CASE WHEN DATEDIFF(CURDATE(), JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.custInvDate'))) BETWEEN 16 AND 30 THEN 1 ELSE 0 END) AS `fifteen_thirty_days_count`,
+				SUM(CASE WHEN DATEDIFF(CURDATE(), JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.custInvDate'))) BETWEEN 16 AND 30 THEN (CASE WHEN a.bookedUnderNew = 4 THEN (a.rate + a.agentRate - IFNULL(a.carrierPartialAmt,0)) 
+				ELSE (a.rate - IFNULL(a.carrierPartialAmt,0)) END) ELSE 0 END) AS `fifteen_thirty_days_amount`,
+				SUM(CASE WHEN DATEDIFF(CURDATE(), JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.custInvDate'))) BETWEEN 31 AND 35 THEN 1 ELSE 0 END) AS `thirty_thirty_five_days_count`,
+				SUM(CASE WHEN DATEDIFF(CURDATE(), JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.custInvDate'))) BETWEEN 31 AND 35 THEN (CASE WHEN a.bookedUnderNew = 4 THEN (a.rate + a.agentRate - IFNULL(a.carrierPartialAmt,0)) 
+				ELSE (a.rate - IFNULL(a.carrierPartialAmt,0)) END) ELSE 0 END) AS `thirty_thirty_five_days_amount`,
+				SUM(CASE WHEN DATEDIFF(CURDATE(), JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.custInvDate'))) BETWEEN 36 AND 45 THEN 1 ELSE 0 END) AS `thirty_five_forty_five_days_count`,
+				SUM(CASE WHEN DATEDIFF(CURDATE(), JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.custInvDate'))) BETWEEN 36 AND 45 THEN (CASE WHEN a.bookedUnderNew = 4 THEN (a.rate + a.agentRate - IFNULL(a.carrierPartialAmt,0)) 
+				ELSE (a.rate - IFNULL(a.carrierPartialAmt,0)) END) ELSE 0 END) AS `thirty_five_forty_five_days_amount`,
+				SUM(CASE WHEN DATEDIFF(CURDATE(), JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.custInvDate'))) BETWEEN 46 AND 60 THEN 1 ELSE 0 END) AS `forty_five_sixty_days_count`,
+				SUM(CASE WHEN DATEDIFF(CURDATE(), JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.custInvDate'))) BETWEEN 46 AND 60 THEN (CASE WHEN  a.bookedUnderNew = 4 THEN (a.rate + a.agentRate - IFNULL(a.carrierPartialAmt,0)) 
+				ELSE (a.rate - IFNULL(a.carrierPartialAmt,0)) END) ELSE 0 END) AS `forty_five_sixty_days_amount`,
+				SUM(CASE WHEN DATEDIFF(CURDATE(), JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.custInvDate'))) >60 THEN 1 ELSE 0 END) AS `sixty_days_count`,
+				SUM(CASE WHEN DATEDIFF(CURDATE(), JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.custInvDate'))) > 60 THEN (CASE WHEN a.bookedUnderNew = 4 THEN (a.rate + a.agentRate - IFNULL(a.carrierPartialAmt,0)) 
+				ELSE (a.rate - IFNULL(a.carrierPartialAmt,0)) END)	ELSE 0 END) AS `sixty_days_amount`
+				FROM dispatchOutside a
+				WHERE $where
+				AND a.carrierPayoutDate = '0000-00-00' AND a.carrierPayoutCheck = '0' 
+				AND JSON_VALID(a.dispatchMeta)
+				AND JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.custInvDate')) IS NOT NULL
+				AND JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.custInvDate')) != ''
+				ORDER BY JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.custInvDate')) ASC
+				LIMIT 1000";			
+		}
 		// echo $sql;exit;
 		$query = $this->db->query($sql);
 		return $query->row(); 
 	}
 	public function exportPayables(){
 		$invoiceIds = json_decode($this->input->post('export_invoice_ids'), true);
-		$dispatch = $this->downloadPayableCSV($invoiceIds);
-			$heading = array('Trucking Company', 'Invoice', 'Factoring Company', 'Delivery Date', 'Carrier Invoice Date', 'Carrier Invoice Ref NO', 'Rate', 'Aging Days', 'Customer Recieved Date');			
+		$table = $this->input->post('dispatchTable');
+		$dispatch = $this->downloadPayableCSV($invoiceIds, $table);
+		if($table == 'warehouse_dispatch'){
+			$heading = array('Trucking Company', 'Invoice', 'Factoring Company', 'End Date', 'Carrier Invoice Date', 'Carrier Invoice Ref NO', 'Rate', 'Aging Days', 'Customer Recieved Date');	
+		}else{
+			$heading = array('Trucking Company', 'Invoice', 'Factoring Company', 'Delivery Date', 'Carrier Invoice Date', 'Carrier Invoice Ref NO', 'Rate', 'Aging Days', 'Customer Recieved Date');	
+		}
+				
 			$data = array($heading);
 			if(!empty($dispatch)) {
 				$rate = 0;
@@ -711,20 +872,28 @@ class AccountPayableController extends CI_Controller
 				foreach($dispatch as $row){
 					$dispatchMeta = json_decode($row['dispatchMeta'],true);
 					$dodate ='0000-00-00';
-				   if($row['dodate']!='0000-00-00') {
+				    if($row['dodate']!='0000-00-00') {
    					   	$dodate = '="' . date('m-d-Y', strtotime($row['dodate'])) . '"';
-				   }
-				   $invReady = $dispatchMeta['invoiceReadyDate'];
-				   if(trim($invReady) != ''){ 
+				    }
+				    if($table == 'warehouse_dispatch'){
+						if($row['edate']!='0000-00-00') {
+							$dodate = '="' . date('m-d-Y', strtotime($row['edate'])) . '"';
+						}
+						$invReady = $row['invoiceReadyDate'];
+						$invPaid = $row['invoicePaidDate'];		
+						$carrierInvDate = $row['custInvDate'];
+				    }else{
+						$invReady = $dispatchMeta['invoiceReadyDate'];
+						$invPaid = $dispatchMeta['invoicePaidDate'];
+						$carrierInvDate = $dispatchMeta['custInvDate'];	
+				    }
+					if(trim($invReady) != '' && trim($invReady) != '0000-00-00'){ 
 						$invReady = '="' . date('m-d-Y', strtotime($invReady)) . '"';
 					}
-				   $invPaid = $dispatchMeta['invoicePaidDate'];
-				   if(trim($invPaid) != ''){ 
+					if(trim($invPaid) != '' && trim($invPaid) != '0000-00-00'){ 
 						$invPaid = '="' . date('m-d-Y', strtotime($invPaid)) . '"';
 					}
-				   
-				    $carrierInvDate = $dispatchMeta['custInvDate'];
-				   if(trim($carrierInvDate) != ''){ 
+					if(trim($carrierInvDate) != '' && trim($carrierInvDate) != '0000-00-00'){ 
 						$carrierInvDate = '="' . date('m-d-Y', strtotime($carrierInvDate)) . '"';
 					}
 						
@@ -760,24 +929,41 @@ class AccountPayableController extends CI_Controller
 			exit;
 			die('csv');
 	}
-	function downloadPayableCSV($invoiceIds){
+	function downloadPayableCSV($invoiceIds, $table){
 		$invoiceIdsString = implode(',', array_map('intval', $invoiceIds));
-		$sql = "SELECT a.id, a.truckingcompany AS company_id, c.company as ttruckingCompany, IFNULL(NULLIF(a.carrierInvoiceRefNo, ''), '-') AS carrierInvoiceRefNo, c.company, bookedUnderOld.company as bookedUnderOld, a.invoice, a.pudate, a.dodate, a.invoiceDate, (a.rate - IFNULL(a.carrierPartialAmt,0))  as rate, a.agentRate, a.parate, a.payableAmt, DATEDIFF(CURDATE(), JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.custInvDate'))) AS days_diff, a.carrierPayoutDate, d.fileurl AS doc_fileurl, carrierInvoice.fileurl AS carrierInvoice, a.dispatchMeta,bookedUnder, bookedUnderNew, booked_under.company as bookedUnder, a.carrierPaymentType, fact.company AS factoringCompany, a.factoringType
-		FROM dispatchOutside a
-		LEFT JOIN truckingCompanies c ON c.id = a.truckingcompany
-		LEFT JOIN booked_under ON booked_under.id=a.bookedUnderNew
-		LEFT JOIN truckingCompanies bookedUnderOld ON bookedUnderOld.id = a.bookedUnder
-		LEFT JOIN documentsOutside d ON d.did = a.id AND d.type = 'carrierGd'
-		LEFT JOIN factoringCompanies fact ON fact.id = a.factoringCompany
-		LEFT JOIN documentsOutside carrierInvoice ON carrierInvoice.did = a.id AND carrierInvoice.type = 'carrierInvoice'
-		WHERE a.carrierPayoutDate = '0000-00-00' AND a.carrierPayoutCheck = '0' 
-		AND JSON_VALID(a.dispatchMeta)
-		AND JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.custInvDate')) IS NOT NULL
-		AND JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.custInvDate')) != ''
-		AND a.id IN ($invoiceIdsString)
-		GROUP BY a.id
-		ORDER BY JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.custInvDate')) ASC
-		LIMIT 1000";
+		if($table == 'warehouse_dispatch'){
+			$sql = "SELECT a.id, a.truckingcompany AS company_id, c.company as ttruckingCompany, IFNULL(NULLIF(a.carrierInvoiceRefNo, ''), '-') AS carrierInvoiceRefNo, c.company, bookedUnderOld.company as bookedUnderOld, a.invoice, a.pudate, a.dodate, a.edate, a.invoiceDate, (a.rate - IFNULL(a.carrierPartialAmt,0))  as rate, a.agentRate, a.parate, a.payableAmt, DATEDIFF(CURDATE(), a.custInvDate) AS days_diff, a.carrierPayoutDate, d.fileurl AS doc_fileurl, carrierInvoice.fileurl AS carrierInvoice, a.dispatchMeta,bookedUnder, bookedUnderNew, booked_under.company as bookedUnder, a.carrierPaymentType, fact.company AS factoringCompany, a.factoringType, a.invoiceReadyDate, a.invoicePaidDate, a.custInvDate
+			FROM warehouse_dispatch a
+			LEFT JOIN truckingCompanies c ON c.id = a.truckingcompany
+			LEFT JOIN booked_under ON booked_under.id=a.bookedUnderNew
+			LEFT JOIN truckingCompanies bookedUnderOld ON bookedUnderOld.id = a.bookedUnder
+			LEFT JOIN documentsOutside d ON d.did = a.id AND d.type = 'carrierGd'
+			LEFT JOIN factoringCompanies fact ON fact.id = a.factoringCompany
+			LEFT JOIN documentsOutside carrierInvoice ON carrierInvoice.did = a.id AND carrierInvoice.type = 'carrierInvoice'
+			WHERE a.carrierPayoutDate = '0000-00-00' AND a.carrierPayoutCheck = '0' 
+			AND (a.custInvDate != '' && a.custInvDate != '0000-00-00' )
+			AND a.id IN ($invoiceIdsString)
+			GROUP BY a.id
+			ORDER BY a.custInvDate ASC
+			LIMIT 1000";
+		}else{
+			$sql = "SELECT a.id, a.truckingcompany AS company_id, c.company as ttruckingCompany, IFNULL(NULLIF(a.carrierInvoiceRefNo, ''), '-') AS carrierInvoiceRefNo, c.company, bookedUnderOld.company as bookedUnderOld, a.invoice, a.pudate, a.dodate, a.invoiceDate, (a.rate - IFNULL(a.carrierPartialAmt,0))  as rate, a.agentRate, a.parate, a.payableAmt, DATEDIFF(CURDATE(), JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.custInvDate'))) AS days_diff, a.carrierPayoutDate, d.fileurl AS doc_fileurl, carrierInvoice.fileurl AS carrierInvoice, a.dispatchMeta,bookedUnder, bookedUnderNew, booked_under.company as bookedUnder, a.carrierPaymentType, fact.company AS factoringCompany, a.factoringType
+			FROM dispatchOutside a
+			LEFT JOIN truckingCompanies c ON c.id = a.truckingcompany
+			LEFT JOIN booked_under ON booked_under.id=a.bookedUnderNew
+			LEFT JOIN truckingCompanies bookedUnderOld ON bookedUnderOld.id = a.bookedUnder
+			LEFT JOIN documentsOutside d ON d.did = a.id AND d.type = 'carrierGd'
+			LEFT JOIN factoringCompanies fact ON fact.id = a.factoringCompany
+			LEFT JOIN documentsOutside carrierInvoice ON carrierInvoice.did = a.id AND carrierInvoice.type = 'carrierInvoice'
+			WHERE a.carrierPayoutDate = '0000-00-00' AND a.carrierPayoutCheck = '0' 
+			AND JSON_VALID(a.dispatchMeta)
+			AND JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.custInvDate')) IS NOT NULL
+			AND JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.custInvDate')) != ''
+			AND a.id IN ($invoiceIdsString)
+			GROUP BY a.id
+			ORDER BY JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.custInvDate')) ASC
+			LIMIT 1000";
+		}
 		$query = $this->db->query($sql);
 		return $query->result_array();
     }
@@ -787,9 +973,9 @@ class AccountPayableController extends CI_Controller
 	    }
 	    $this->load->library('pdf');
         $pdf = $this->pdf->load(); 
-		
+		$table = $this->input->post('dispatchTable');
 		$invoiceIds = json_decode($this->input->post('export_pdf_invoice_ids'), true);
-		$dispatch = $this->downloadPayableCSV($invoiceIds);
+		$dispatch = $this->downloadPayableCSV($invoiceIds, $table);
 		$groupedData = [];
 
 		foreach ($dispatch as $row) {
@@ -828,7 +1014,7 @@ class AccountPayableController extends CI_Controller
 
 		$data['invoice'] = array();
 		$data['invoice'] = $groupedData;
-	
+		$data['table'] = $table;
     	////// generate csv 	
 		$file = 'accountPayablesPDF';
 		

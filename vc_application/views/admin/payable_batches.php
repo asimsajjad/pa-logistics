@@ -59,8 +59,15 @@
 			?> 
 			<form class="form form-inline" method="post" action="">
 				<input type="text" required readonly placeholder="Starting Batch Date" value="<?php echo $sdate; ?>" name="sdate" style="width: 165px;" class="form-control datepicker"> &nbsp;
-				<input type="text" required style="width: 160px;" readonly placeholder="Ending Batch Date" value="<?php echo $edate; ?>" name="edate" class="form-control datepicker"> &nbsp;
-			<select class="form-control select2" name="truckingCompany[]" data-placeholder="Select Carrier" multiple="multiple" style="max-width: 250px;">
+				<input type="text" required style="width: 160px;" readonly placeholder="Ending Batch Date" value="<?php echo $edate; ?>" name="edate" class="form-control datepicker">
+				&nbsp;				
+				<select name="dispatchType" required class="form-control" style="max-width: 150px;">
+					<option value="">Select Division</option>
+					<option value="outsideDispatch" <?php if($this->input->post('dispatchType') == 'outsideDispatch') { echo 'selected'; } ?>>PA Logistics</option>
+					<option value="warehouse_dispatch" <?php if($this->input->post('dispatchType') == 'warehouse_dispatch') { echo 'selected'; } ?>>PA Warehousing</option>
+				</select>
+				&nbsp;
+				<select class="form-control select2" name="truckingCompany[]" data-placeholder="Select Carrier" multiple="multiple" style="max-width: 250px;">
 						<option value="">Select Carrier</option>
 						<?php 
 						$selected_truckingCompanies = $this->input->post('truckingCompany');
@@ -118,10 +125,14 @@
 						// echo '<pre> <br>';
 						// print_r($customersPayables); die;
 						foreach ($customersPayables as $customer) {
-							$totalInvoiceAmount = $customer['0-15_days_amount'] + $customer['16-30_days_amount'] + $customer['31-45_days_amount'] +
-								$customer['46-60_days_amount'] + $customer['61-75_days_amount'] + $customer['76-90_days_amount'] +
-								$customer['90_days_amount'];
-								$totalAmount = $totalAmount + $customer['totalAmount'];
+							// $totalInvoiceAmount = $customer['0-15_days_amount'] + $customer['16-30_days_amount'] + $customer['31-45_days_amount'] + $customer['46-60_days_amount'] + $customer['61-75_days_amount'] + $customer['76-90_days_amount'] + $customer['90_days_amount'];
+							$totalAmount = $totalAmount + $customer['totalAmount'];
+
+								if($this->input->post('dispatchType') == 'outsideDispatch') { 
+									$dispatchURL = base_url('admin/outside-dispatch/update/').$customer['id'];
+								} else if ($this->input->post('dispatchType') == 'warehouse_dispatch'){
+									$dispatchURL = base_url('admin/paWarehouse/update/').$customer['id'];
+								}
 							?>
 							<tr class="tr-<?php echo $customer['id']; ?>" >
 								<td  style="text-align: center; vertical-align: middle;"><?php echo $n; ?></td>
@@ -182,6 +193,7 @@ $(document).ready(function () {
 </script>
 <script>
 	const baseUrl = "<?= base_url(); ?>";
+	const dispatchType = "<?= $this->input->post('dispatchType'); ?>";
 	function formatChildRows(invoices, company, company_id) {
 		let html = `
 			<table class="table table-bordered mb-0" id="details-table" style="background-color:#f9f9f9;">
@@ -190,7 +202,7 @@ $(document).ready(function () {
 						<th>#</th>
 						<th>INVOICE</th>
 						<th>CARRIER REF #</th>
-						<th>CARRIER INV. REF #</th>`;
+ 						<th>CARRIER INV. REF #</th>`;	
 						if (company === 'Multiple Carriers' || company_id == 4) {
 							html += `<th>CARRIER</th>`;
 						}
@@ -212,20 +224,44 @@ $(document).ready(function () {
 						const dispatchMeta = JSON.parse(inv.dispatchMeta || '{}');
 						const dispatchInfo = dispatchMeta.dispatchInfo || [];
 						let carrierRef = '';
-						dispatchInfo.forEach(item => {
-							if (item[0] === 'Carrier Ref No') {
-								carrierRef = item[1];
-							}
-						});
-						const custInvDate = formatDate(dispatchMeta.custInvDate);
-						const dodate = formatDate(inv.dodate);
+						if(dispatchType === 'warehouse_dispatch'){
+							carrierRef = inv.dispatchValue;
+						}else{
+							dispatchInfo.forEach(item => {
+								if (item[0] === 'Carrier Ref No') {
+									carrierRef = item[1];
+								}
+							});
+						}
+						if (!carrierRef || carrierRef === 'null') {
+							carrierRef = '';
+						}
+						let custInvDate ='';
+						if(dispatchType === 'warehouse_dispatch'){
+							custInvDate = formatDate(inv.custInvDate);
+						}else{
+							custInvDate = formatDate(dispatchMeta.custInvDate);
+						}
+						// const dodate = formatDate(inv.dodate);
+						let dodate  = '';
+						if(dispatchType === 'warehouse_dispatch'){
+							dodate = formatDate(inv.edate);
+						}else{
+							dodate = formatDate(inv.dodate);
+						}
+						let docPath = '';
 						const docLinks = (inv.documentsOutside || []).map(doc => {
 							const fileName = doc.fileurl;
 							const displayName = fileName.length > 20 
 								? fileName.substring(0, 10) + '...' + fileName.slice(-10) 
 								: fileName;
+						if (dispatchType == 'outsideDispatch') {
+							docPath = 'assets/outside-dispatch/gd/';
+						}else if (dispatchType == 'warehouse_dispatch'){
+							docPath ='assets/warehouse/gd/';
+						}
 
-							return `<a href="${baseUrl}assets/outside-dispatch/gd/${fileName}" target="_blank" 
+							return `<a href="${baseUrl}${docPath}${fileName}" target="_blank" 
 										style="display: inline-block; margin-right: 10px; margin-bottom: 5px;">
 										<span>${displayName}</span>
 									</a>`;
@@ -238,19 +274,25 @@ $(document).ready(function () {
 						`;
 
 
+						let dispatchURL = baseUrl + 'admin/dispatch/update/' + inv.id;
+						if (dispatchType === 'outsideDispatch') {
+							dispatchURL = baseUrl + 'admin/outside-dispatch/update/' + inv.id;
+						}else if (dispatchType === 'warehouse_dispatch'){
+							dispatchURL = baseUrl + 'admin/paWarehouse/update/' + inv.id;
+						}
 						totalAmount += parseFloat(inv.rate || 0);
 						
 						html += `<tr>
 							<td>${idx + 1}</td>
-							<td><a target="_blank" href="${baseUrl}admin/outside-dispatch/update/${inv.id}">${inv.invoice}</a></td>
+							<td><a target="_blank" href="${dispatchURL}">${inv.invoice}</a></td>
 							<td>${carrierRef}</td>
 							<td>${inv.carrierInvoiceRefNo || ''}</td>`;
-						if (company === 'Multiple Carriers' || company_id == 4) {
-							html += `<td>${inv.company || ''}</td>`;
-						}
-						if (company_id == 4) {
-							html += `<td>${inv.bookedUnder || inv.bookedUnderOld || ''}</td>`;
-						}
+							if (company === 'Multiple Carriers' || company_id == 4) {
+								html += `<td>${inv.company || ''}</td>`;
+							}
+							if (company_id == 4) {
+								html += `<td>${inv.bookedUnder || inv.bookedUnderOld || ''}</td>`;
+							}
 						html += `
 							<td>${dodate}</td>
 							<td>${custInvDate}</td>`;
