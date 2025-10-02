@@ -413,10 +413,11 @@
           generatePendingInvoicesTable("PU Date & Time", "PU Info", "Del Date & Time", "Del Info", "Company", "Carrier", "Tracking #", "Invoice #", "Shipment Status", "Missing Pendency", detailsText, records);
         } else if (type === "shipment" && status === "pendingCarrierInvoices") {
           generatePendingCarrierInvoicesTable("PU Date & Time", "PU Info", "Del Date & Time", "Del Info", "Company","Carrier", "Tracking #", "Invoice #", "Shipment Status", "Missing Pendency", detailsText, records);
-        } else if (type === "shipment") {
-          generateTable(status === "delivery" ? "Delivery Date" : "Pickup Date","Carrier", "Customer", status === "delivery" ? "Drop Off City" : "Pick Up City", "Tracking #", "Invoice #", "Shipment Notes", "Shipment Status",detailsText, status, records
-          );
-        }  else if (type === "bookings") {
+        } else if (type === "shipment" && status === "delivery") {
+          generateTable("Delivery Date","Carrier", "Customer", "Pick Up City", "Drop Off City", "Tracking #", "Invoice #", "Shipment Notes", "Shipment Status",detailsText, status, records);
+        } else if (type === "shipment" && status === "pickup") {
+          generatePickupTable("Pickup Date","Carrier", "Customer", "Pick Up City", "Drop Off City" , "Tracking #", "Invoice #", "Shipment Notes", "Shipment Status",detailsText, status, records);
+        } else if (type === "bookings") {
           generateBookingsTable("PU Date & Time", "PU Info", "Del Date & Time", "Del Info", "Company", "Tracking #", "Invoice #", "Shipment Status", "pickup",detailsText, records);
         } else if (type === "receivableInvoices") {
           generateReceivableInvoiceTable("Company", "Invoice #", "Delivery Date", "Invoice Date", "Carrier Rate", "Invoice Amt", detailsText, records);
@@ -430,7 +431,7 @@
     });
   }
 
-  function generateTable(col1, col2, col3, col4, col5, col6,col7, col8, detailsText, status, records) {
+  function generateTable(col1, col2, col3, col4, col5, col6,col7, col8, col9, detailsText, status, records) {
     let html = `
     <h4 class="mt-4">${detailsText}</h4>
     <table id="details-table" class="display nowrap" style="width:100%;">
@@ -445,6 +446,171 @@
           <th style="width: 150px;">${col6 || ""}</th>
           <th style="width: 150px;">${col7 || ""}</th>
           <th style="width: 150px;">${col8 || ""}</th>
+          <th style="width: 150px;">${col9 || ""}</th>
+        </tr>
+      </thead>
+      <tbody>`;
+      const statusColors = {
+        'Driver On Site': '#1e90ff',
+        'Driver on Tracking': '#0073e6',
+        'Pending': '#ffa500',
+        'Shipment at Risk': '#ff4500',
+        'Shipment Delayed': '#ff6347',
+        'Shipment Delivered': '#32cd32',
+        'Shipment in Transit': '#3096a0',
+        'Shipment On Hold': '#ffc107',
+        'Shipment Picked up': '#228b22',
+        'Shipment Scheduled': '#6a5acd'
+      };
+
+        records.forEach((record, index) => {
+          let pickupCities = '';
+          let dispatchCities = '';
+          let dispatchDateTime = '';
+          if (Array.isArray(record.dispatchInfo)) {
+            const filteredInfo = record.dispatchInfo.filter(info => {
+              if (status.toLowerCase() === 'pickup') {
+                return info.pd_type === 'pickup';
+              } else if (status.toLowerCase() === 'delivery') {
+                return info.pd_type === 'dropoff';
+              }
+              return false;
+            });
+
+          dispatchCities = filteredInfo.map(info => `[${info.pd_city_name}]`).join('<br>');
+          dispatchDateTime = filteredInfo
+          .map(info => {
+            const time = info.pd_time;
+            if (time.includes('-')) {
+              // Time range: add <br> after @
+              return `${info.pd_date} <strong>@</strong><br><strong>${time}</strong>`;
+            } else {
+              // Single time: no <br> after @
+              return `${info.pd_date} <strong>@ ${time}</strong>`;
+            }
+          })
+          .join('<br>');
+
+          }
+          if (Array.isArray(record.pickupInfo)) {
+            pickupCities = record.pickupInfo
+              .map(info => info.pd_city_name ? info.pd_city_name : '')  
+              .filter(city => city !== '')                              
+              .map(city => `[${city}]`)                              
+              .join('<br>');
+          }
+                  
+        const color = statusColors[record.driver_status] || ''; 
+        let dropdownStyle = color ? `border: 2px solid ${color}; background-color: ${color}; color:white; font-weight: bold;` : '';
+
+        let optionsHtml = '';
+          let statusExistsInOptions = shipmentStatusOptions.some(opt => opt.title === record.driver_status);
+
+          if (!statusExistsInOptions) {
+            optionsHtml += `<option value="${record.driver_status}" style="display:none" selected>${record.driver_status}</option>`;
+          }
+
+          optionsHtml += shipmentStatusOptions.map(opt => 
+            `<option value="${opt.title}" ${opt.title === record.driver_status ? 'selected' : ''}>${opt.title}</option>`
+          ).join('');
+
+          let lastUpdateInfoHtml = '';
+          if (Array.isArray(record.lastUpdateInfo) && record.lastUpdateInfo.length > 0) {
+            const lastUpdate = record.lastUpdateInfo[0];
+            const lastUpdateDate = new Date(lastUpdate.rDate); 
+            const formattedDate = lastUpdateDate.toLocaleDateString('en-US', {
+              month: '2-digit', 
+              day: '2-digit',   
+              year: '2-digit'   
+            });
+
+            const formattedTime = lastUpdateDate.toLocaleTimeString('en-US', {
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: true
+            }).replace(':00', ''); 
+            lastUpdateInfoHtml = `Last updated: <strong>${lastUpdate.uname}</strong> ${formattedDate} @ ${formattedTime}`;
+          } else {
+            lastUpdateInfoHtml = '';
+          }
+          let time = record.time;
+          let timeHtml = '';
+
+          if (time.includes('-')) {
+            timeHtml = `<strong>@</strong><br><strong>${time}</strong>`;
+          } else {
+            timeHtml = `<strong>@ ${time}</strong>`;
+          }
+        const invoiceStyle = record.overdue_status ? 'color: red; font-weight: bold;' : '';
+
+          html += `<tr class="">
+            <td style="text-align: center; vertical-align: middle; min-width: 50px;">${index + 1}</td>
+            <td style="min-width: 200px;">
+              ${record.date} ${timeHtml}<br>
+              ${dispatchDateTime}
+            </td>
+            <td style="min-width: 200px;">${record.carrier}</td>
+            <td style="min-width: 250px;">${record.company}</td>
+             <td style="min-width: 180px;">${record.pickup_city}<br>${pickupCities}</td>
+            <td style="min-width: 180px;"> <strong>${record.drop_city}</strong><br><strong>${dispatchCities}</strong></td>
+            <td style="min-width: 170px;"><a class="dispatch-tracking-${record.dispatchid}" href="${baseUrl}admin/outside-dispatch/update/${record.dispatchid}">${record.tracking}</a></td> 
+            <td style="min-width: 130px;"><a class="dispatch-invoice-${record.dispatchid}"  href="${baseUrl}admin/outside-dispatch/update/${record.dispatchid}" style="${invoiceStyle}">${record.invoice}</a></td> 
+            <td style="min-width: 250px;">
+              <span class="td-txt td-txt-${record.dispatchid}">
+                <span class="c_status_txt_${record.dispatchid}">${record.status}</span> &nbsp; 
+                <i class="fas fa-edit" title="Edit" data-id="${record.dispatchid}" alt="Edit" style="cursor:pointer"></i>
+              </span>
+              <span class="td-input td-input-${record.dispatchid}" style="display: none;">
+                <input type="text" class="c_status_input_${record.dispatchid} current_input" value="${record.status}">
+                <i class="fa fa-paper-plane" data-id="${record.dispatchid}" aria-hidden="true" style="cursor:pointer"></i>
+              </span>
+            </td>
+            <td style="min-width: 350px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <select name="driver_status" class="form-control c_driver_status_input_${record.dispatchid}" 
+                  style="width:auto; ${dropdownStyle}" disabled>
+                  ${optionsHtml}
+                </select>
+                <span style="font-style: italic; font-size: 14px;">${lastUpdateInfoHtml}</span>
+              </div>
+          </td>
+        </tr>`;
+      });
+    html += `</tbody></table>`;
+    document.getElementById("details-section").innerHTML = html;
+    let pageLength = (sdate === '' && edate === '') ? -1 : 15;
+    $('#details-table').DataTable({
+        paging: true,
+        searching: true,
+        ordering: false,
+        info: true,
+        scrollX: true,  // Enable horizontal scroll
+        // scrollY: '400px',
+        columnDefs: [
+          { width: '100px', targets: 0 },
+          { width: '150px', targets: [1,2,3,4,5,6,7,8] }
+        ],
+        lengthMenu: [ [15, 30, -1], [15, 30, "All"] ],
+        pageLength: pageLength
+        });
+  }
+  
+   function generatePickupTable(col1, col2, col3, col4, col5, col6,col7, col8, col9, detailsText, status, records) {
+    let html = `
+    <h4 class="mt-4">${detailsText}</h4>
+    <table id="details-table" class="display nowrap" style="width:100%;">
+      <thead>
+        <tr>
+          <th style="width: 50px;">Sr. #</th>
+          <th style="width: 150px;">${col1}</th>
+          <th style="width: 150px;">${col2}</th>
+          <th style="width: 150px;">${col3}</th>
+          <th style="width: 150px;">${col4}</th>
+          <th style="width: 150px;">${col5 || ""}</th>
+          <th style="width: 150px;">${col6 || ""}</th>
+          <th style="width: 150px;">${col7 || ""}</th>
+          <th style="width: 150px;">${col8 || ""}</th>
+          <th style="width: 150px;">${col9 || ""}</th>
         </tr>
       </thead>
       <tbody>`;
@@ -463,6 +629,7 @@
 
         records.forEach((record, index) => {
           let dispatchCities = '';
+          let dropCities = '';
           let dispatchDateTime = '';
           if (Array.isArray(record.dispatchInfo)) {
             const filteredInfo = record.dispatchInfo.filter(info => {
@@ -490,6 +657,14 @@
 
           }
         
+          if (Array.isArray(record.deliveryInfo)) {
+            dropCities = record.deliveryInfo
+              .map(info => info.pd_city_name ? info.pd_city_name : '')  
+              .filter(city => city !== '')                              
+              .map(city => `[${city}]`)                              
+              .join('<br>');
+          }
+
           const color = statusColors[record.driver_status] || ''; 
         let dropdownStyle = color ? `border: 2px solid ${color}; background-color: ${color}; color:white; font-weight: bold;` : '';
 
@@ -541,7 +716,8 @@
             </td>
             <td style="min-width: 200px;">${record.carrier}</td>
             <td style="min-width: 250px;">${record.company}</td>
-            <td style="min-width: 180px;">${record.city}<br>${dispatchCities}</td>
+             <td style="min-width: 180px;"><strong>${record.pickup_city}</strong><br><strong>${dispatchCities}</strong></td>
+            <td style="min-width: 180px;">${record.drop_city}<br>${dropCities}</td>
             <td style="min-width: 170px;"><a class="dispatch-tracking-${record.dispatchid}" href="${baseUrl}admin/outside-dispatch/update/${record.dispatchid}">${record.tracking}</a></td> 
             <td style="min-width: 130px;"><a class="dispatch-invoice-${record.dispatchid}"  href="${baseUrl}admin/outside-dispatch/update/${record.dispatchid}" style="${invoiceStyle}">${record.invoice}</a></td> 
             <td style="min-width: 250px;">

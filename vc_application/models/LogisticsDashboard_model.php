@@ -81,7 +81,8 @@ class LogisticsDashboard_model extends CI_Model
         }
 
 		$deliveryShipmentDetails_sql="SELECT d.id as dispatchid,d.invoice as invoice, d.dispatchMeta, v.vname, v.vnumber,
-        COALESCE(CONCAT('[', ca.city, ', ', ca.state, ']'), CONCAT('[',dc.city,']')) AS `city`,
+        COALESCE(CONCAT('[', ca.city, ', ', ca.state, ']'), CONCAT('[',dc.city,']')) AS `drop_city`,
+        COALESCE(CONCAT('[', pca.city, ', ', pca.state, ']'), CONCAT('[',pc.city,']')) AS `pickup_city`,
         d.delivered,d.vehicle,d.driver,d.rate,d.dodate as `date`,d.dtime as `time`,d.tracking,d.driver_status,d.status,dr.dname,com.company, tc.company as carrier,
         STR_TO_DATE(CONCAT(d.dodate, ' ', 
         CASE 
@@ -96,6 +97,8 @@ class LogisticsDashboard_model extends CI_Model
         LEFT join drivers as dr  ON dr.id=d.driver
         LEFT join companyAddress as ca  ON ca.id=d.daddressid
         LEFT JOIN cities as dc ON dc.id=d.dcity
+        LEFT join companyAddress as pca  ON pca.id=d.paddressid
+        LEFT JOIN cities as pc ON pc.id=d.pcity
         WHERE (
         (
             $where
@@ -130,7 +133,8 @@ class LogisticsDashboard_model extends CI_Model
             $where .= " AND (d.pudate = CURDATE() OR extra.pd_date = CURDATE())";
         }
 		$pickupShipmentDetails_sql="SELECT d.id as dispatchid, d.invoice as invoice,d.dispatchMeta, v.vname, v.vnumber,
-        COALESCE(CONCAT('[', ca.city, ', ', ca.state, ']'), CONCAT('[',pc.city,']')) AS `city`,
+        COALESCE(CONCAT('[', ca.city, ', ', ca.state, ']'), CONCAT('[',pc.city,']')) AS `pickup_city`,
+        COALESCE(CONCAT('[', dca.city, ', ', dca.state, ']'), CONCAT('[',dc.city,']')) AS `drop_city`,
         d.pudate as `date`, d.ptime as `time`, d.delivered,d.vehicle,d.driver,d.rate,d.dodate,d.tracking,d.driver_status,d.status,dr.dname,com.company, tc.company as carrier,
         STR_TO_DATE(CONCAT(d.pudate, ' ', 
         CASE 
@@ -145,6 +149,8 @@ class LogisticsDashboard_model extends CI_Model
         LEFT join drivers as dr  ON dr.id=d.driver
         LEFT join companyAddress as ca  ON ca.id=d.paddressid
         LEFT JOIN cities as pc ON pc.id=d.pcity
+        LEFT join companyAddress as dca  ON dca.id=d.daddressid
+        LEFT JOIN cities as dc ON dc.id=d.dcity
         WHERE (($where)
         OR (d.driver_status IN ('Pending', 'Shipment Scheduled')  AND d.status NOT LIKE '%closed%' AND (d.pudate <= CURDATE() OR extra.pd_date <= CURDATE())))
          AND `d`.`pudate` != '0000-00-00' AND `d`.`parentInvoice` = ''

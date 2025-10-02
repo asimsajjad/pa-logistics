@@ -48,8 +48,17 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 				foreach ($data as &$row) {
 					// echo $row['dispatchid'];exit;
 					$dispatchInfo = $this->Comancontroler_model->get_extradispatchinfo_by_id($row['dispatchid'],'pd_date, pd_city, CONCAT(city, ", ", state) as city, pd_location, pd_time, pd_addressid, pd_type', 'dispatchOutsideExtraInfo', 'delivery', 'ASC');
+
+					 $pickupInfo = $this->Comancontroler_model->get_extradispatchinfo_by_id(
+						$row['dispatchid'],
+						'pd_date, pd_city, CONCAT(city, ", ", state) as city, pd_location, pd_time, pd_addressid, pd_type',
+						'dispatchOutsideExtraInfo',
+						'pickup',
+						'ASC'
+					);
+					
 					$dispatchLog= $this->Comancontroler_model->get_dispachLog('dispatchOutsideLog',$row['dispatchid']);
-					// print_r($dispatchLog[0]);exit;
+					// print_r($pickupInfo);exit;
 					$allDatesPassed = true;
 					if ($dispatchInfo) {
 						foreach ($dispatchInfo as $dis) {
@@ -77,6 +86,31 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 							'pd_type' => ''
 						];
 					}
+
+					 if ($pickupInfo) {
+						foreach ($pickupInfo as $pup) {
+							$row['pickupInfo'][] = [
+								'pd_date'      => $pup['pd_date'],
+								'pd_city'      => $pup['pd_city'],
+								'pd_city_name' => $pup['city'],
+								'pd_location'  => $pup['pd_location'],
+								'pd_time'      => $pup['pd_time'],
+								'pd_addressid' => $pup['pd_addressid'],
+								'pd_type'      => $pup['pd_type']
+							];
+						}
+					} else {
+						$row['pickupInfo'][] = [
+							'pd_date'      => '',
+							'pd_city'      => '',
+							'pd_city_name' => '',
+							'pd_location'  => '',
+							'pd_time'      => '',
+							'pd_addressid' => '',
+							'pd_type'      => ''
+						];
+					}
+					
 					if (!empty($row['date']) && $row['date'] >= $today) {
 						$allDatesPassed = false;
 					}
@@ -97,6 +131,15 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 				$today = date('Y-m-d');
 				foreach ($data as &$row) {
 					$dispatchInfo = $this->Comancontroler_model->get_extradispatchinfo_by_id($row['dispatchid'],'pd_date, pd_city, CONCAT(city, ", ", state) as city, pd_location, pd_time, pd_addressid, pd_type', 'dispatchOutsideExtraInfo', 'pickup', 'ASC');
+
+					$deliveryInfo = $this->Comancontroler_model->get_extradispatchinfo_by_id(
+						$row['dispatchid'],
+						'pd_date, pd_city, CONCAT(city, ", ", state) as city, pd_location, pd_time, pd_addressid, pd_type',
+						'dispatchOutsideExtraInfo',
+						'delivery',
+						'ASC'
+					);
+					
 					$dispatchLog= $this->Comancontroler_model->get_dispachLog('dispatchOutsideLog',$row['dispatchid']);
 					// print_r($dispatchLog);exit;
 					$allDatesPassed = true;
@@ -126,6 +169,31 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 							'pd_type' => ''
 						];
 					}
+
+					if ($deliveryInfo) {
+						foreach ($deliveryInfo as $del) {
+							$row['deliveryInfo'][] = [
+								'pd_date'      => $del['pd_date'],
+								'pd_city'      => $del['pd_city'],
+								'pd_city_name' => $del['city'],
+								'pd_location'  => $del['pd_location'],
+								'pd_time'      => $del['pd_time'],
+								'pd_addressid' => $del['pd_addressid'],
+								'pd_type'      => $del['pd_type']
+							];
+						}
+					} else {
+						$row['deliveryInfo'][] = [
+							'pd_date'      => '',
+							'pd_city'      => '',
+							'pd_city_name' => '',
+							'pd_location'  => '',
+							'pd_time'      => '',
+							'pd_addressid' => '',
+							'pd_type'      => ''
+						];
+					}
+					
 					if (!empty($row['date']) && $row['date'] >= $today) {
 						$allDatesPassed = false;
 					}
