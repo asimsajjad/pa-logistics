@@ -2169,35 +2169,47 @@ class OutSideDispatch extends CI_Controller {
 	}
 
 	public function getChildInvoices(){
-		// echo 'childinvoices';exit;
 		$id = $this->input->post('id');
 		$sql="SELECT * FROM dispatchOutside WHERE id ='$id'";
 		$result = $this->db->query($sql)->row();
-		$subInvoice = $subChildInvoice = $subDispatch = $dispatchArr = array();
+
+		$subChildInvoice = $subDispatch = $allChildren = [];
+
 		if(!empty($result->childInvoice)){
 			$childInvoices = explode(',', $result->childInvoice);
-			$subChildInvoice = array_merge($subChildInvoice ?? [], $childInvoices);
+			$subChildInvoice = array_merge($subChildInvoice, $childInvoices);
 		}
-		
+
 		$dispatchMeta = json_decode($result->dispatchMeta,true);
 		if(!empty($dispatchMeta['otherChildInvoice'])){
 			$otherChildInvoices = explode(',', $dispatchMeta['otherChildInvoice']);
-			$subDispatch = array_merge($subDispatch ?? [], $otherChildInvoices);
+			$subDispatch = array_merge($subDispatch, $otherChildInvoices);
 		}
-		
-		$allChildren = [];
+
 		if(!empty($subChildInvoice)){
-			$subDis = $this->Comancontroler_model->get_data_by_where_in ('invoice',$subChildInvoice,'dispatchOutside','*');
+			$subDis = $this->Comancontroler_model->get_data_by_where_in('invoice',$subChildInvoice,'dispatchOutside','*');
 			if($subDis){ $allChildren = array_merge($allChildren, $subDis); }
 		}
-		// print_r($allChildren);exit;
+
 		if(!empty($subDispatch)){
-			$subDis2 = $this->Comancontroler_model->get_data_by_where_in ('invoice',$subDispatch,'dispatch','*');
+			$subDis2 = $this->Comancontroler_model->get_data_by_where_in('invoice',$subDispatch,'dispatch','*');
 			if($subDis2){ $allChildren = array_merge($allChildren, $subDis2); }
 		}
+
 		$allChildren = array_map("unserialize", array_unique(array_map("serialize", $allChildren)));
-		$this->output->set_content_type('application/json')->set_output(json_encode(['childInvoices' => $allChildren]));
+
+		if ($result) {
+			$parent = (array)$result;
+			$parent['isParent'] = true; 
+			array_unshift($allChildren, $parent); 
+		}
+
+		$this->output->set_content_type('application/json')->set_output(
+			json_encode([
+				'childInvoices'  => $allChildren
+			]));
 	}
+
 
 	public function outsideDispatchAdd() {
 	    if(!checkPermission($this->session->userdata('permission'),'odispatch')){

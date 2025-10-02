@@ -1703,8 +1703,9 @@
 
 			const statusOptions = shipmentStatus.map(ds => `<option value="${ds.title}" ${key.driver_status === ds.title ? 'selected' : ''}>${ds.title}</option>`).join('');
 
+			const parentStyle = key.isParent ? 'style="background-color: #f8d7da;"' : '';
 			const row = `
-				<tr>
+				<tr ${parentStyle}>
 					<td>${n}</td>
 					<td><strong>${puDate}</strong>${subInvBtn}</td>
 					<td><a href="${href}">${puInfo}</a></td>
