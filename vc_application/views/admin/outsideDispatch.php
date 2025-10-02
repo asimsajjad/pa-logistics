@@ -12,7 +12,15 @@
 	#invoiceTable thead tr {background: #1362b7;color: #fff;}
 	#invoiceTable .srno{font-size:0px;}
 	#invoiceTable .srno::before{content:">>";font-size:15px;}
+
+	table tr.showTr, #subInvoicesTable tr.showTr{display: table-row !important;}
+	#subInvoicesTable thead tr {background: #1362b7;color: #fff;}
+	#subInvoicesTable .srno{font-size:0px;}
+	#subInvoicesTable .srno::before{content:">>";font-size:15px;}
+
 	.getAddressParent{position:relative;}
+
+	
 .addressList{position:absolute;top:99%;left:0px;}
 .cRed{color:red;font-weight:bold;}
 </style>
@@ -218,6 +226,7 @@
 				<tbody>
                     
 					<?php
+					
 						$cityArr = $locationArr = $companyArr = $comAddArr = array();
 					
 					if(!empty($companies)){
@@ -247,6 +256,8 @@
                     usort($dispatchOutside, function ($a, $b) use ($sort_column) {
                         return strcmp($a[$sort_column], $b[$sort_column]);
                     });
+					// echo "<pre>";
+					// print_r($dispatchOutside);exit;
     
 						if(!empty($dispatchOutside)){
 							$n=1; $rate = $parate = $parentChildRate = $parentChildPaRate = 0;
@@ -316,9 +327,18 @@
 											}
 										}
 									}
-									 if($key['childInvoice'] != ''){
-								        echo '<br><br><a href="#" class="showChildInv btn btn-sm btn-success pt-cta" data-trcls=".parInvCls'.str_replace(' ','',$key['invoice']).'" data-cls=".subInvTr'.str_replace(' ','',$key['invoice']).'" data-toggle="modal" data-target="#invoiceModal">Sub Inv.</a>';
-								    } ?>
+									// if($key['childInvoice'] != '' || $dispatchMeta['otherChildInvoice'] != ''){
+								    //     echo '<br><br><a href="#" class="showChildInv btn btn-sm btn-success pt-cta" data-trcls=".parInvCls'.str_replace(' ','',$key['invoice']).'" data-cls=".subInvTr'.str_replace(' ','',$key['invoice']).'" data-toggle="modal" data-target="#invoiceModal">Sub Inv.</a>';
+								    // } 
+								    if ($key['childInvoice'] != '' || $dispatchMeta['otherChildInvoice'] != ''): ?>
+										<br><br>
+										<a href="#" 
+										class="btn btn-sm btn-success pt-cta" 
+										onclick="loadChildInvoices('<?php echo $key['id']; ?>')">
+										Sub Inv.
+										</a>
+									<?php endif; 
+								?>
 									
 								</td> 
 								<td>
@@ -809,6 +829,43 @@
 </div>
 
 <!-- Modal -->
+<div id="subInvoicesModal" class="modal fade" role="dialog" style="z-index: 9;">
+	<div class="modal-dialog modal-lg" style="max-width: 1200px;">
+		<div class="modal-content" style="max-width: 100%;width: 100%;">
+			<div class="modal-header">
+				<button type="button" style="color: #000;" class="close" data-dismiss="modal">&times;</button>
+				<h4 class="modal-title">Sub Invoice</h4>
+			</div>
+			<div class="modal-body table-responsive">
+				<table class="table table-bordered" id="subInvoicesTable" width="100%" cellspacing="0">
+					<!-- <thead></thead> -->
+					<thead style="position:sticky;top:0">
+                    <tr  class="thead">
+						<th style="min-width: 56px;">Sr #</th>
+						<th style="min-width: 225px;">PU Date & Time</th>
+						<th style="min-width: 300px;">PU Info</th>
+						<th style="min-width: 225px;">Del Date & Time</th>
+						<th style="min-width: 300px;">Del Info</th>
+						<th style="min-width: 198px;">Carrier Rate</th>
+						<th style="min-width: 198px;">Inv Amount</th>
+						<th style="min-width: 300px;">Company</th>
+						<th style="min-width: 300px;">Carrier</th>
+						<th style="min-width: 262px;">Dispatch Info</th>
+						<th style="min-width: 198px;">Tracking / PO #</th>
+						<th style="min-width: 198px;">Invoice #</th>
+						<th style="min-width: 250px;">Shipment Status</th> 
+						<th style="min-width: 400px;">Shipment Notes</th>
+                        <th style="min-width: 220px;">Action</th>
+					</tr> 
+				</thead>
+					<tbody>
+					
+					</tbody>
+				</table>
+			</div> 
+		</div>
+	</div>
+</div>
 
 <div id="invoiceModal" class="modal fade" role="dialog">
 	<div class="modal-dialog modal-lg" style="max-width: 1200px;">
@@ -1323,7 +1380,7 @@
 		});
 		
 		var rowsHead = $('.thead').clone();
-		$('#invoiceTable thead').html(rowsHead);
+		// $('#invoiceTable thead').html(rowsHead);
 		
 		$('.showChildInv').click(function(e){
 		   e.preventDefault();
@@ -1579,6 +1636,181 @@
 		}
 		
 	});
+
+
+	const base_url = "<?php echo base_url(); ?>";
+	const comAddArr = <?php echo json_encode($comAddArr); ?>;
+    const locationArr = <?php echo json_encode($locationArr); ?>;
+    const cityArr = <?php echo json_encode($cityArr); ?>;
+    const companyArr = <?php echo json_encode($companyArr); ?>;
+    const truckingCompanies = <?php echo json_encode($truckingCompanies); ?>;
+    const shipmentStatus = <?php echo json_encode($shipmentStatus); ?>;
+	function loadChildInvoices(id) {
+		$.ajax({
+			url: "<?php echo base_url('admin/getChildInvoices');?>",
+			type: 'POST',
+			data: { id: id },
+			success: function(response) {
+			    const childInvoices = response.childInvoices;
+				renderChildInvoiceTable(
+					childInvoices,
+					comAddArr,        
+					locationArr,
+					cityArr,
+					companyArr,
+					truckingCompanies,
+					shipmentStatus
+				);
+				// $('#invoiceModal .modal-body').html(response);
+				$('#subInvoicesModal').modal('show');
+			},
+			error: function(xhr, status, error) {
+				alert('Failed to load child invoices: ' + error);
+			}
+		});
+	}
+	
+
+	function renderChildInvoiceTable(childInvoices, comAddArr, locationArr, cityArr, companyArr, truckingCompanies, shipmentStatus) {
+		const tbody = $('#subInvoicesTable tbody');
+		tbody.empty();
+
+		let n = 1;
+		let rate = 0;
+		let parate = 0;
+
+		childInvoices.forEach(key => {
+			rate += parseFloat(key.rate);
+			parate += parseFloat(key.parate);
+
+			const dispatchMeta = key.dispatchMeta ? JSON.parse(key.dispatchMeta) : {};
+			const cls = key.parentInvoice ? `parInvCls${key.parentInvoice.replace(/\s/g, '')} childTR` : 'parInvCls';
+			const href = base_url + (key.invoice.includes('OSD') ? 'admin/outside-dispatch/update/' : 'admin/dispatch/update/') + key.id;
+			const hrefDuplicate = base_url + (key.invoice.includes('OSD') ? 'admin/outside-dispatch/add/' : 'admin/dispatch/add/') + key.id;
+
+			const puDate = formatDate(key.pudate) + ' @ ' + (key.ptime || '');
+			const pdDate = key.pd_date && !key.pd_date.includes('0000') ? formatDate(key.pd_date) + ' @ ' + key.pd_time :
+						(!key.dodate.includes('0000') ? formatDate(key.dodate) + ' @ ' + key.dtime : '');
+
+			const subInvBtn = key.childInvoice ? `<br><br><a href="#" class="showChildInv btn btn-sm btn-success pt-cta" data-trcls=".parInvCls${key.invoice.replace(/\s/g, '')}" data-cls=".subInvTr${key.invoice.replace(/\s/g, '')}" data-toggle="modal" data-target="#invoiceModal">Sub Inv.</a>` : '';
+
+			const puInfo = resolveAddress(key.paddressid, key.plocation, key.pcity, comAddArr, locationArr, cityArr);
+			const delInfo = resolveAddress(key.pd_addressid || key.daddressid, key.pd_location || key.dlocation, key.pd_city || key.dcity, comAddArr, locationArr, cityArr);
+
+			const companyName = companyArr[key.company] || '';
+			const carrierName = resolveCarrier(key.truckingCompany, key.bookedUnder, truckingCompanies);
+			const dispatchInfo = dispatchMeta.dispatchInfo ? dispatchMeta.dispatchInfo.map(d => `${d[0]}: ${d[1]}`).join('<br>') : '';
+
+			const statusOptions = shipmentStatus.map(ds => `<option value="${ds.title}" ${key.driver_status === ds.title ? 'selected' : ''}>${ds.title}</option>`).join('');
+
+			const row = `
+				<tr>
+					<td>${n}</td>
+					<td><strong>${puDate}</strong>${subInvBtn}</td>
+					<td><a href="${href}">${puInfo}</a></td>
+					<td><strong>${pdDate}</strong></td>
+					<td>${delInfo}</td>
+					<td>
+						<span class="td-txt td-txt-${key.id}">${key.rate > 0 ? '$' : ''}<span class="c_rate_txt_${key.id} rateTxt">${key.rate}</span> <i class="fas fa-edit d-none" data-id="${key.id}" title="Edit"></i></span>
+						<span class="td-input td-input-${key.id}">
+							<input type="text" class="c_rate_input_${key.id} current_input" value="${key.rate}" onkeyup="this.value=this.value.replace(/[^\d]/,'')">
+							<i class="fa fa-paper-plane d-none" data-id="${key.id}"></i>
+						</span>
+					</td>
+					<td>
+						<span class="td-txt td-txt-${key.id}">${key.parate > 0 ? '$' : ''}<span class="c_parate_txt_${key.id} paRateTxt">${key.parate}</span> <i class="fas fa-edit d-none" data-id="${key.id}" title="Edit"></i></span>
+						<span class="td-input td-input-${key.id}">
+							<input type="text" class="c_parate_input_${key.id} current_input" value="${key.parate}" onkeyup="this.value=this.value.replace(/[^\d]/,'')">
+							<i class="fa fa-paper-plane d-none" data-id="${key.id}"></i>
+						</span>
+					</td>
+					<td>${companyName}</td>
+					<td>${carrierName}</td>
+					<td>${dispatchInfo}</td>
+					<td>
+						<span class="td-txt td-txt-${key.id}"><span class="c_tracking_txt_${key.id}">${key.tracking}</span> <i class="fas fa-edit d-none" data-id="${key.id}" title="Edit"></i></span>
+						<span class="td-input td-input-${key.id}">
+							<input type="text" class="c_tracking_input_${key.id} current_input" value="${key.tracking}">
+							<i class="fa fa-paper-plane d-none" data-id="${key.id}"></i>
+						</span>
+					</td>
+					<td>
+						<span class="td-txt td-txt-${key.id}"><a href="${href}"><span class="c_invoice_txt_${key.id}">${key.invoice}</span></a> <i class="fas fa-edit d-none" data-id="${key.id}" title="Edit"></i></span>
+						<span class="td-input td-input-${key.id}">
+							<input type="text" class="c_invoice_input_${key.id} current_input" readonly value="${key.invoice}">
+							<i class="fa fa-paper-plane d-none" data-id="${key.id}"></i>
+						</span>
+					</td>
+					<td>
+						<span class="td-txt td-txt-${key.id}"><span class="c_driver_status_txt_${key.id}">${key.driver_status}</span> <i class="fas fa-edit d-none" data-id="${key.id}" title="Edit"></i></span>
+						<span class="td-input td-input-${key.id}">
+							<select class="c_driver_status_input_${key.id} current_change">${statusOptions}</select>
+							<i class="fa fa-paper-plane d-none" data-id="${key.id}"></i>
+						</span>
+					</td>
+					<td>
+						<span class="td-txt td-txt-${key.id}"><span class="c_status_txt_${key.id}">${key.status}</span> <i class="fas fa-edit" data-id="${key.id}" title="Edit"></i></span>
+						<span class="td-input td-input-${key.id}">
+							<input type="text" class="c_status_input_${key.id} current_input" value="${key.status}">
+							<i class="fa fa-paper-plane d-none" data-id="${key.id}"></i>
+						</span>
+					</td>
+					<td>
+						<a class="btn btn-sm btn-success pt-cta" href="${href}">Edit <i class="fas fa-edit" title="Edit"></i></a>
+						<a class="btn btn-sm btn-success pt-cta" href="${hrefDuplicate}">Duplicate</a>
+					</td>
+				</tr>
+			`;
+			tbody.append(row);
+			n++;
+		});
+		const tfoot = `
+		<tfoot>
+			<tr>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td><strong>Total</strong></td>
+				<td><strong>$<span>${rate.toFixed(2)}</span></strong></td>
+				<td><strong>$<span>${parate.toFixed(2)}</span></strong></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+			</tr>
+		</tfoot>
+		`;
+		$('#subInvoicesTable tfoot').remove();
+		$('#subInvoicesTable').append(tfoot);
+	}
+
+	function formatDate(dateStr) {
+		const d = new Date(dateStr);
+		return isNaN(d) ? '' : `${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}-${d.getFullYear()}`;
+	}
+
+	function resolveAddress(addressId, locationId, cityId, comAddArr, locationArr, cityArr) {
+		if (comAddArr[addressId]) {
+			return `${comAddArr[addressId][0]} [${comAddArr[addressId][1]}]`;
+		}
+		let loc = locationArr[locationId] || '';
+		let city = cityArr[cityId] ? ` [${cityArr[cityId]}]` : '';
+		return loc + city;
+	}
+
+	function resolveCarrier(truckingCompanyId, bookedUnderId, truckingCompanies) {
+		let carrier = '';
+		truckingCompanies.forEach(val => {
+			if (val.id === truckingCompanyId) carrier = val.company;
+			if (val.id === bookedUnderId) carrier += ` / ${val.company}`;
+		});
+		return carrier;
+	}
 </script>
 <style>
 		.select2-container--default .select2-selection--single {

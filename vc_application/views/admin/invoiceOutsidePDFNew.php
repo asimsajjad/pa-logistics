@@ -11,7 +11,7 @@ if($expName){
 			$expense[$expName[$e]]['price'] = $expense[$expName[$e]]['price'] + $expPrice[$e];
 			$expense[$expName[$e]]['unit'][] = $expPrice[$e];
 		} else {
-			$expense[$expName[$e]] = array('price'=>$expPrice[$e],'unit'=>array($expPrice[$e]), 'days'=>array($expDays[$e]));
+			$expense[$expName[$e]] = array('price'=>$expPrice[$e],'unit'=>array($expPrice[$e]));
 		}
     }
     if($childTrailer){
@@ -35,9 +35,10 @@ if($expName){
     				if(array_key_exists($cVal[0],$expense)){
     					$expense[$cVal[0]]['price'] = $expense[$cVal[0]]['price'] + $cVal[1];
     					$expense[$cVal[0]]['unit'][] = $cVal[1];
-						$expense[$cVal[0]]['days'][] = $cVal[2];
+						$expense[$cVal[0]]['startDate'][] = $cVal[2];
+						$expense[$cVal[0]]['endDate'][] = $cVal[3];
     				} else {
-    					$expense[$cVal[0]] = array('price'=>$cVal[1],'unit'=>array($cVal[1]), 'days'=>array($cVal[2]));
+    					$expense[$cVal[0]] = array('price'=>$cVal[1],'unit'=>array($cVal[1]), 'startDate'=>array($cVal[2]), 'endDate'=>array($cVal[3]));
     				}
     			}
     		}
@@ -49,15 +50,16 @@ if($expName){
     		if(array_key_exists($expVal[0],$expense)){
     			$expense[$expVal[0]]['price'] = $expense[$expVal[0]]['price'] + $expVal[1];
     			$expense[$expVal[0]]['unit'][] = $expVal[1];
-				$expense[$expVal[0]]['days'][] = $expVal[2];
+				$expense[$expVal[0]]['startDate'][] = $expVal[2];
+				$expense[$expVal[0]]['endDate'][] = $expVal[3];
     		} else {
-    			$expense[$expVal[0]] = array('price'=>$expVal[1],'unit'=>array($expVal[1]),'days'=>array($expVal[2]));
+    			$expense[$expVal[0]] = array('price'=>$expVal[1],'unit'=>array($expVal[1]), 'startDate'=>array($expVal[2]), 'endDate'=>array($expVal[3]));
     		}
     	}
     }
 
 }
-// 	echo "<pre>";
+// echo "<pre>";
 // print_r($expense);exit;
 
 if($dispatchMeta['invoicePDF'] == 'Trucking') { $invoicePDF = 'Trucking'; }
@@ -367,6 +369,7 @@ table tr.notes table{margin-bottom:5px;width:100%;max-width:1000px;}
 							$totalAmt = 0; $disAmt = 0.00; 
 							$trCount = 0;
 							if($expense) { 
+								// print_r($expense);exit;
 								foreach($expense as $key=>$expVal) {
 									 if($key=='Discount'){
 										$disAmt = $disAmt + $expVal['price'];
@@ -378,12 +381,56 @@ table tr.notes table{margin-bottom:5px;width:100%;max-width:1000px;}
 											echo ' ('.implode(' + ',$expVal['unit']).') '; 
 										}
 										// print_r($expVal['days']);exit;
-				       					if (!empty($expVal['days'])) {
-											$daysTotal = is_array($expVal['days']) ? array_sum($expVal['days']) : $expVal['days'];
-											if ($daysTotal > 0) {
-												echo ' x '.$daysTotal.' day'.($daysTotal > 1 ? 's' : '');
+				       					// if (!empty($expVal['days'])) {
+										// 	$daysTotal = is_array($expVal['days']) ? array_sum($expVal['days']) : $expVal['days'];
+										// 	if ($daysTotal > 0) {
+										// 		echo ' x '.$daysTotal.' day'.($daysTotal > 1 ? 's' : '');
+										// 	}
+										// }
+										if (!empty($expVal['startDate']) && !empty($expVal['endDate'])) {
+											$totalDays = 0;
+											$totalHours = 0;
+											$rangeStart = null;
+											$rangeEnd   = null;
+
+											foreach ($expVal['startDate'] as $i => $start) {
+												$end = $expVal['endDate'][$i] ?? null;
+												if (!empty($start) && !empty($end)) {
+													$startDate = new DateTime($start);
+													$endDate   = new DateTime($end);
+													$diff      = $startDate->diff($endDate);
+
+													$totalDays  += $diff->days;
+													$totalHours += $diff->h;
+
+													// Track min start and max end for range
+													if ($rangeStart === null || $startDate < $rangeStart) {
+														$rangeStart = $startDate;
+													}
+													if ($rangeEnd === null || $endDate > $rangeEnd) {
+														$rangeEnd = $endDate;
+													}
+												}
+											}
+
+											$durationStr = [];
+											if ($totalDays > 0) {
+												$durationStr[] = $totalDays+1 .' Day'.($totalDays > 1 ? 's' : '');
+												// Show date range
+												if ($rangeStart && $rangeEnd) {
+													$durationStr[] = '(' . $rangeStart->format('m/d/Y') . ' - ' . $rangeEnd->format('m/d/Y') . ')';
+												}
+											}
+											if ($totalHours > 0) {
+												$durationStr[] = $totalHours.' Hour'.($totalHours > 1 ? 's' : '');
+											}
+
+											if (!empty($durationStr)) {
+												echo ' x '.implode(' ', $durationStr);
 											}
 										}
+										
+									
 
 										echo '</td><td align="right">';
 										 $totalAmt = $totalAmt + $expVal['price'];
@@ -410,13 +457,50 @@ table tr.notes table{margin-bottom:5px;width:100%;max-width:1000px;}
 									 $tr .= '<tr><td colspan="3" align="right"><strong>'.$key.'';
 									if($cExpense == 'true' && count($expVal['unit']) > 1)
 										{ $tr .= ' ('.implode(' + ',$expVal['unit']).') '; }
-									if (!empty($expVal['days'])) {
-										$daysTotal = is_array($expVal['days']) ? array_sum($expVal['days']) : $expVal['days'];
-										if ($daysTotal > 0) {
-											$tr .= ' x ' . $daysTotal . ' Day' . ($daysTotal > 1 ? 's' : '');
+									// if (!empty($expVal['days'])) {
+									// 	$daysTotal = is_array($expVal['days']) ? array_sum($expVal['days']) : $expVal['days'];
+									// 	if ($daysTotal > 0) {
+									// 		$tr .= ' x ' . $daysTotal . ' Day' . ($daysTotal > 1 ? 's' : '');
+									// 	}
+									// }
+									
+									if (!empty($expVal['startDate']) && !empty($expVal['endDate'])) {
+										$totalDays = 0;
+										$totalHours = 0;
+										$rangeStart = null;
+										$rangeEnd   = null;
+										foreach ($expVal['startDate'] as $i => $start) {
+											$end = $expVal['endDate'][$i] ?? null;
+											if (!empty($start) && !empty($end)) {
+												$startDate = new DateTime($start);
+												$endDate   = new DateTime($end);
+												$diff      = $startDate->diff($endDate);
+												$totalDays  += $diff->days;
+												$totalHours += $diff->h;
+												if ($rangeStart === null || $startDate < $rangeStart) {
+													$rangeStart = $startDate;
+												}
+												if ($rangeEnd === null || $endDate > $rangeEnd) {
+													$rangeEnd = $endDate;
+												}
+											}
+										}
+										$durationStr = [];
+										if ($totalDays > 0) {
+											$durationStr[] = $totalDays+1 .' Day'.($totalDays > 1 ? 's' : '');
+											if ($rangeStart && $rangeEnd) {
+												$durationStr[] = '(' . $rangeStart->format('m/d/Y') . ' - ' . $rangeEnd->format('m/d/Y') . ')';
+											}
+										}
+										if ($totalHours > 0) {
+											$durationStr[] = $totalHours.' Hour'.($totalHours > 1 ? 's' : '');
+										}
+										if (!empty($durationStr)) {
+											$tr .= ' x '.implode(' ', $durationStr);
 										}
 									}
-										$tr .= '</strong></td><td  align="right">';
+
+									$tr .= '</strong></td><td  align="right">';
 									 if($key=='Discount'){ 
 										$discountAmt = $discountAmt + $expVal['price'];
 									 } else {

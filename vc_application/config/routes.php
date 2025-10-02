@@ -205,6 +205,8 @@ $route['admin/trucking-company/add'] = 'OutSideDispatch/truckingCompaniesAdd';
 $route['admin/trucking-company/update/(:num)'] = 'OutSideDispatch/truckingCompaniesUpdate';
 $route['admin/trucking-company/remove-file/(:num)/(:num)'] = 'OutSideDispatch/truckingCompaniesRemoveFile';
 $route['admin/trucking-company/delete/(:num)'] = 'OutSideDispatch/truckingCompaniesDelete';
+$route['admin/getChildInvoices'] = 'OutSideDispatch/getChildInvoices';
+
 
 // Booked Under Routes
 $route['admin/booked-under'] = 'BookedUnder/bookedUnder';
@@ -346,6 +348,7 @@ $route['admin/address/warehouseAdd'] = 'Comancontroler/warehouseAddressAdd';
 $route['admin/address/warehouseUpdate/(:num)'] = 'Comancontroler/warehouseAddressUpdate';
 $route['admin/address/warehouseDelete/(:num)'] = 'Comancontroler/warehouseAddressDelete';
 $route['admin/address/warehouseAddSublocation/(:num)'] = 'Comancontroler/warehouseAddSublocation';
+
 
 $route['admin/(:any)/removeSingleDocument/(:num)/(:num)'] = 'AdminControler/removeSingleDocument';
 

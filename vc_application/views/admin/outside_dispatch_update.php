@@ -176,6 +176,7 @@
 					<!-- <?php if(strtotime('2025-01-16') >= strtotime($disp['pudate'])) { echo 'hide d-none'; } ?> -->
 					 <?php 
 						$selectedUserId = 0;
+						
 						if (!empty($disp['userid']) && $disp['userid'] != 0) {
 							$selectedUserId = $disp['userid'];
 						} elseif (isset($user)) { 
@@ -183,6 +184,7 @@
 						}
 
 						$disabled = $selectedUserId ? 'disabled' : '';
+
 						?>
 
 						<div class="col-sm-3 ">	     
@@ -1180,7 +1182,7 @@
 																	?>
 																</select>
 															</div>
-															<div class="d-flex gap-2 align-items-center">
+															<div class="gap-2 align-items-center">
 																<input 
 																	<?php if($disp['carrierPayoutCheck']=='1') { echo ' readonly'; }?> 
 																	name="expensePrice[]" 
@@ -1191,25 +1193,38 @@
 																	class="form-control expenseAmt" 
 																	value="<?=$expVal[1]?>" 
 																	step="0.01" 
-																	style="width: <?= $showDaysInput ? '60%' : '100%' ?>;"
+																	style="width: <?= $showDaysInput ? '100%' : '100%' ?>;"
 																>
 
 																<?php if ($showDaysInput): ?>
 																	<input 
-																		name="expenseDays[]" 
-																		type="number" 
-																		min="1" 
-																		class="form-control expenseDays" 
-																		placeholder="Days" 
-																		style="width: 38%;" 
+																		name="expenseStart[]" 
+																		type="datetime-local" 
+																		class="form-control expenseStart" 
+																		placeholder="Start Date Time" 
+																		style="width:100%; margin-left:2%;" 
 																		value="<?= isset($expVal[2]) ? $expVal[2] : '' ?>"
+																	>
+																	<input 
+																		name="expenseEnd[]" 
+																		type="datetime-local" 
+																		class="form-control expenseEnd" 
+																		placeholder="End Date Time" 
+																		style="width:100%; margin-left:2%;" 
+																		value="<?= isset($expVal[3]) ? $expVal[3] : '' ?>"
 																	>
 																<?php else: ?>
 																	<input 
-																		name="expenseDays[]" 
+																		name="expenseStart[]" 
 																		type="hidden" 
-																		class="form-control expenseDays" 
-																		value="0"
+																		class="form-control expenseStart" 
+																		value=""
+																	>
+																	<input 
+																		name="expenseEnd[]" 
+																		type="hidden" 
+																		class="form-control expenseEnd" 
+																		value=""
 																	>
 																<?php endif; ?>
 															</div>
@@ -2580,35 +2595,55 @@
 			calculateCarrierRate();
 		});
 
-		$('body').on('change', '.expenseNameSelect', function () {
+		// $('body').on('change', '.expenseNameSelect', function () {
+		// 	calculatePaRate();
+		// 	var selected = $(this).val();
+		// 	var container = $(this).closest('.form-group').find('.d-flex');
+		// 	var priceInput = container.find('.expenseAmt');
+		// 	var daysInput = container.find('.expenseDays');
+
+		// 	var needsDays = expenseMeta.some(function (exp) {
+		// 		return exp.title === selected && exp.days_input.toLowerCase() === 'yes';
+		// 	});
+
+		// 	if (daysInput.length === 0) {
+		// 		container.append('<input name="expenseDays[]" type="hidden" class="form-control expenseDays" value="0">');
+		// 		daysInput = container.find('.expenseDays');
+		// 	}
+
+		// 	if (needsDays) {
+		// 		daysInput.attr('type', 'number')
+		// 			.attr('min', '1')
+		// 			.attr('placeholder', 'Days')
+		// 			.val('');
+		// 		priceInput.css('width', '60%');
+		// 		daysInput.css('width', '38%').show();
+		// 	} else {
+		// 		daysInput.attr('type', 'hidden').val(0);
+		// 		priceInput.css('width', '100%');
+		// 	}
+		// });
+
+		$('body').on('change', '.expenseNameSelect', function () { 
 			calculatePaRate();
 			var selected = $(this).val();
-			var container = $(this).closest('.form-group').find('.d-flex');
+			var container = $(this).closest('.form-group');
 			var priceInput = container.find('.expenseAmt');
-			var daysInput = container.find('.expenseDays');
-
 			var needsDays = expenseMeta.some(function (exp) {
 				return exp.title === selected && exp.days_input.toLowerCase() === 'yes';
 			});
-
-			if (daysInput.length === 0) {
-				container.append('<input name="expenseDays[]" type="hidden" class="form-control expenseDays" value="0">');
-				daysInput = container.find('.expenseDays');
-			}
-
+			container.find('.expenseStart, .expenseEnd').remove();
+			
 			if (needsDays) {
-				daysInput.attr('type', 'number')
-					.attr('min', '1')
-					.attr('placeholder', 'Days')
-					.val('');
-				priceInput.css('width', '60%');
-				daysInput.css('width', '38%').show();
+				priceInput.css('width', '100%');
+				container.append('<input name="expenseStart[]" type="datetime-local" class="form-control expenseStart" placeholder="Start Date Time" style="width:100%; margin-left:2%;">');
+				container.append('<input name="expenseEnd[]" type="datetime-local" class="form-control expenseEnd" placeholder="End Date Time" style="width:100%; margin-left:2%;">');
 			} else {
-				daysInput.attr('type', 'hidden').val(0);
+				container.append('<input name="expenseStart[]" type="datetime-local" class="form-control d-none" placeholder="Start Date Time" style="">');
+				container.append('<input name="expenseEnd[]" type="datetime-local" class="form-control d-none" placeholder="End Date Time" style="">');
 				priceInput.css('width', '100%');
 			}
 		});
-
 		
 		$('body').on('change','.carrierExpenseNameSelect',function(){
 			calculateCarrierRate();
@@ -2700,9 +2735,7 @@
 								${expenseOptions}
 							</select>
 						</div>
-						<div class="d-flex gap-2 align-items-center mt-2">
 							<input name="expensePrice[]" data-cls=".expenseName-${dcid}" required type="number" min="0" class="form-control expenseAmt" value="0" step="0.01" style="width: 100%;">
-						</div>
 					</div>
 				</div>
 			`;
@@ -2828,14 +2861,7 @@
 						<div class="input-group mb-2">\
 							<input name="ptime1[]" type="text" class="timeInput form-control" value="" readonly>\
 							<div class="tDropdown"></div>';
-								// for (let h = 0; h < 24; h++) {
-								// 	for (let m = 0; m < 60; m += 15) {
-								// 		let hour = h % 12 === 0 ? 12 : h % 12;
-								// 		let meridian = h < 12 ? "AM" : "PM";
-								// 		let times = `${hour.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')} ${meridian}`;
-								// 		pfieldset += '<div>'+times+'</div>';
-								// 	}
-								// }	
+							
 							pfieldset += '\
 							<div class="input-group-append">\
 								<div class="input-group-text timedd" style="width: 32px;padding: 2px; background: white; appointmentType"><!--?xml version="1.0" ?--><svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><title/><g data-name="34-Time" id="_34-Time"><path d="M16,0A16,16,0,1,0,32,16,16,16,0,0,0,16,0Zm1,29.95V26H15v3.95A14,14,0,0,1,2.05,17H6V15H2.05A14,14,0,0,1,15,2.05V6h2V2.05A14,14,0,0,1,29.95,15H26v2h3.95A14,14,0,0,1,17,29.95Z"/><path d="M17,9H15v7a1,1,0,0,0,.29.71l5,5,1.41-1.41L17,15.59Z"/></g></svg></div>\

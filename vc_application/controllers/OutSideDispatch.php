@@ -556,7 +556,10 @@ class OutSideDispatch extends CI_Controller {
 				$dispatchMeta['carrierInvoiceCheck'] = $this->input->post('carrierInvoiceCheck');
 				$expenseName = $this->input->post('expenseName');
 				$expensePrice = $this->input->post('expensePrice');
-				$expenseDays = $this->input->post('expenseDays');
+				// $expenseDays = $this->input->post('expenseDays');
+				$expenseStart = $this->input->post('expenseStart');
+				$expenseEnd = $this->input->post('expenseEnd');
+				
 
 				$carrierExpenseName = $this->input->post('carrierExpenseName');
 				$carrierExpensePrice = $this->input->post('carrierExpensePrice');
@@ -604,7 +607,7 @@ class OutSideDispatch extends CI_Controller {
 
 				if(is_array($expenseName)) {
 				    for($i=0;$i<count($expenseName);$i++){
-				        $dispatchMeta['expense'][] = array($expenseName[$i],$expensePrice[$i],$expenseDays[$i]);
+				        $dispatchMeta['expense'][] = array($expenseName[$i],$expensePrice[$i],$expenseStart[$i],$expenseEnd[$i]);
 				    }
 				}
 				if(is_array($carrierExpenseName)) {
@@ -678,7 +681,7 @@ class OutSideDispatch extends CI_Controller {
 				$insert_data=array(
 				    'driver'=>$driverId,
 				    'truckingCompany'=>$this->input->post('truckingCompany'),
-					 'userid'=>$this->input->post('userid'),
+					'userid'=>$this->input->post('userid'),
 				    'bookedUnder'=>$this->input->post('bookedUnder'),
 				    'bookedUnderNew'=>$this->input->post('bookedUnderNew'),
 				    'pudate'=>$pudate,
@@ -1328,6 +1331,7 @@ class OutSideDispatch extends CI_Controller {
 	    $data['erInformation'] = $this->Comancontroler_model->get_data_by_table('erInformation');
 		$data['locations'] = $this->Comancontroler_model->get_data_by_table('locations');
 		//$data['vehicles'] = $this->Comancontroler_model->get_data_by_table('vehicles');
+		// echo $disInfo[0]['userid'];exit;
 		$data['documents'] = array();
 
 		
@@ -1774,7 +1778,6 @@ class OutSideDispatch extends CI_Controller {
     	$this->load->view('admin/outsideDispatch',$data);
     	$this->load->view('admin/layout/footer');
 	}
-
 	public function index() {
 	    if(!checkPermission($this->session->userdata('permission'),'odispatch')){
 	        redirect(base_url('AdminDashboard'));   
@@ -2017,7 +2020,6 @@ class OutSideDispatch extends CI_Controller {
 			die('csv');
         }
 		
-		
         if($this->input->post('search'))	{
 			$company = $this->input->post('company');    
             $truckingCompany = $this->input->post('truckingCompanies');
@@ -2047,15 +2049,26 @@ class OutSideDispatch extends CI_Controller {
         
     	$data['dispatchOutside'] = $this->Comancontroler_model->get_dispatchOutside_by_filter($sdate,$edate,$company,$truckingCompany,$driver,$status,$invoice,$tracking,$dispatchInfoValue,$dispatchInfo,'');
 
-    	$subInvoice = $dispatchArr = array();
+    	$subInvoice = $subChildInvoice = $subDispatch = $dispatchArr = array();
     	if($data['dispatchOutside']){
     	    for($i=0;count($data['dispatchOutside']) > $i;$i++){
     	        $data['dispatchOutside'][$i]['sortcolumn'] = str_replace('-','',$data['dispatchOutside'][$i]['pudate']);
     	        if(in_array($data['dispatchOutside'][$i]['id'], $dispatchArr)) { continue; }
     	        $dispatchArr[] = $data['dispatchOutside'][$i]['id'];
-				// print_r($data['dispatchOutside'][$i]['invoice']);exit;
+				$dispatchMeta = json_decode($data['dispatchOutside'][$i]['dispatchMeta'],true);
+				// print_r($dispatchMeta['otherChildInvoice']);exit;
     	        if($data['dispatchOutside'][$i]['childInvoice'] != '') { $subInvoice[] = $data['dispatchOutside'][$i]['invoice']; }
     	        
+				// if(!empty($data['dispatchOutside'][$i]['childInvoice'])){
+				// 	$childInvoices = explode(',', $data['dispatchOutside'][$i]['childInvoice']);
+				// 	$subChildInvoice = array_merge($subChildInvoice ?? [], $childInvoices);
+				// }
+
+				// if(!empty($dispatchMeta['otherChildInvoice'])){
+				// 	$otherChildInvoices = explode(',', $dispatchMeta['otherChildInvoice']);
+				// 	$subDispatch = array_merge($subDispatch ?? [], $otherChildInvoices);
+				// }
+				
     	        // $dispatchInfo = $this->Comancontroler_model->get_data_by_column('dispatchid',$data['dispatchOutside'][$i]['id'],'dispatchOutsideExtraInfo','pd_date,pd_city,pd_location,pd_time,pd_addressid','pd_order','desc','1');
 				
 				$dispatchInfo = $this->Comancontroler_model->get_data_by_column('dispatchid',$data['dispatchOutside'][$i]['id'],'dispatchOutsideExtraInfo','pd_date,pd_city,pd_location,pd_time,pd_addressid,pd_type','pd_order','ASC','');
@@ -2100,8 +2113,6 @@ class OutSideDispatch extends CI_Controller {
     	}
     	if($subInvoice){
 			$subDis = $this->Comancontroler_model->get_dispatchOutside_by_filter('','','','','','','','','','',$subInvoice);
-						// print_r($subDis);exit;
-
 			if($subDis){
 				foreach($subDis as $sd){
 				    $sd['sortcolumn'] = str_replace('-','',$sd['pudate']);
@@ -2113,6 +2124,20 @@ class OutSideDispatch extends CI_Controller {
 				}
 			}
 		}
+
+		// $allChildren = [];
+		// if(!empty($subChildInvoice)){
+		// 	$subDis = $this->Comancontroler_model->get_dispatchOutside_by_filter('', '', '', '', '', '', '', '', '', '', $subChildInvoice
+		// 	);
+		// 	if($subDis){ $allChildren = array_merge($allChildren, $subDis); }
+		// }
+		// if(!empty($subDispatch)){
+		// 	$subDis2 = $this->Comancontroler_model->get_data_by_where_in ('invoice',$subDispatch,'dispatch','*');
+		// 	if($subDis2){ $allChildren = array_merge($allChildren, $subDis2); }
+		// }
+		// $allChildren = array_map("unserialize", array_unique(array_map("serialize", $allChildren)));
+		// $data['childInvoices'] = $allChildren;
+
 		$invoiceWiseTotal = [];
 		foreach ($data['dispatchOutside'] as $key) {
 			$groupKey = $key['parentInvoice'] ?: $key['invoice'];
@@ -2141,6 +2166,37 @@ class OutSideDispatch extends CI_Controller {
     	$this->load->view('admin/layout/sidebar');
     	$this->load->view('admin/outsideDispatch',$data);
     	$this->load->view('admin/layout/footer');
+	}
+
+	public function getChildInvoices(){
+		// echo 'childinvoices';exit;
+		$id = $this->input->post('id');
+		$sql="SELECT * FROM dispatchOutside WHERE id ='$id'";
+		$result = $this->db->query($sql)->row();
+		$subInvoice = $subChildInvoice = $subDispatch = $dispatchArr = array();
+		if(!empty($result->childInvoice)){
+			$childInvoices = explode(',', $result->childInvoice);
+			$subChildInvoice = array_merge($subChildInvoice ?? [], $childInvoices);
+		}
+		
+		$dispatchMeta = json_decode($result->dispatchMeta,true);
+		if(!empty($dispatchMeta['otherChildInvoice'])){
+			$otherChildInvoices = explode(',', $dispatchMeta['otherChildInvoice']);
+			$subDispatch = array_merge($subDispatch ?? [], $otherChildInvoices);
+		}
+		
+		$allChildren = [];
+		if(!empty($subChildInvoice)){
+			$subDis = $this->Comancontroler_model->get_data_by_where_in ('invoice',$subChildInvoice,'dispatchOutside','*');
+			if($subDis){ $allChildren = array_merge($allChildren, $subDis); }
+		}
+		// print_r($allChildren);exit;
+		if(!empty($subDispatch)){
+			$subDis2 = $this->Comancontroler_model->get_data_by_where_in ('invoice',$subDispatch,'dispatch','*');
+			if($subDis2){ $allChildren = array_merge($allChildren, $subDis2); }
+		}
+		$allChildren = array_map("unserialize", array_unique(array_map("serialize", $allChildren)));
+		$this->output->set_content_type('application/json')->set_output(json_encode(['childInvoices' => $allChildren]));
 	}
 
 	public function outsideDispatchAdd() {
