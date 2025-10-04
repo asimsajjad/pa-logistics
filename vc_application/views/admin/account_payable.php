@@ -39,6 +39,16 @@
 		<div class="add_page" style="float: right;">
 		</div>
 		<div class="d-flex align-items-center flex-wrap" style="gap: 15px; float: right;">
+			<a class="invoice-tab" href="javascript:void(0);" onclick="submitPayableSearch('pending')" title="pending invoices" style="text-decoration:none">
+				<div class="invoice-top">
+					<span>Pending Invoices <span id="pending_count" style="color: #6f42c1;">(0)</span></span>
+					<div class="bell-icon-wrapper">
+						<i class="fa fa-bell bell-icon" style="font-size: 25px; margin-top: 0px; color: #6f42c1;"></i>
+					</div>        
+				</div>
+				<div class="invoice-amount text-success" id=""><span id="pending_amount" style="color: #6f42c1 ;">$ 0.00</span></div>
+			</a>	
+
 			<a class="invoice-tab" href="javascript:void(0);" onclick="submitPayableSearch('zero')" title="0 to 15 Aging days" style="text-decoration:none">
 				<div class="invoice-top">
 					<span>Aging 0-15 <span id="0_15_days_count" style="color: #5cb85c;">(0)</span></span>
@@ -912,11 +922,16 @@ $(document).off('click', '.download-all-btn').on('click', '.download-all-btn', f
 				let amount15_30 = response.DaysCount.fifteen_thirty_days_amount || 0;
 				let count0_15 = response.DaysCount.zero_fifteen_days_count || 0;
 				let amount0_15 = response.DaysCount.zero_fifteen_days_amount || 0;
+				let pending_count = response.DaysCount.pending_count || 0;
+				let pending_amount = response.DaysCount.pending_amount || 0;
 
 				const formatAmount = (val) => (parseFloat(val) || 0).toLocaleString('en-US', {
 					minimumFractionDigits: 2,
 					maximumFractionDigits: 2
 				});
+
+				$("#pending_count").text("(" + pending_count + ")");
+				$("#pending_amount").text("$" + formatAmount(pending_amount));
 
 				$("#0_15_days_count").text("(" + count0_15 + ")");
 				$("#0_15_days_amount").text("$" + formatAmount(amount0_15));

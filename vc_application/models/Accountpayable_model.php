@@ -44,6 +44,9 @@ class Accountpayable_model extends CI_Model
 		}
 		if($table == 'warehouse_dispatch'){
 			if ($agingSearch != '') {  
+				if($agingSearch == 'pending'){
+					$where .= " AND (a.invoicePaidDate IS NOT NULL AND a.invoicePaidDate != '0000-00-00')";
+				}
 				if($agingSearch == 'zero'){
 					$where .= " AND DATEDIFF(CURDATE(), a.custInvDate) BETWEEN 0 AND 15";
 				}elseif($agingSearch == 'thirty'){
@@ -60,6 +63,10 @@ class Accountpayable_model extends CI_Model
 			}
 		}else{
 			if ($agingSearch != '') {  
+				if($agingSearch == 'pending'){
+					$where .= " AND ((JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.invoicePaidDate'))) IS NOT NULL 
+					AND (JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.invoicePaidDate'))) != '')";
+				}
 				if($agingSearch == 'zero'){
 					$where .= " AND DATEDIFF(CURDATE(), JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.custInvDate'))) BETWEEN 0 AND 15";
 				}elseif($agingSearch == 'thirty'){

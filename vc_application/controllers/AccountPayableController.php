@@ -798,6 +798,9 @@ class AccountPayableController extends CI_Controller
 		}
 		if($dispatchType == 'warehouse_dispatch'){
 			$sql = "SELECT 
+				SUM(CASE WHEN (a.invoicePaidDate !='' AND a.invoicePaidDate != '0000-00-00') THEN 1 ELSE 0 END) AS `pending_count`,
+				SUM(CASE WHEN (a.invoicePaidDate !='' AND a.invoicePaidDate != '0000-00-00') THEN (CASE WHEN a.bookedUnderNew = 4 THEN (a.rate + a.agentRate - IFNULL(a.carrierPartialAmt,0)) 
+				ELSE (a.rate - IFNULL(a.carrierPartialAmt,0))  END) ELSE 0 END) AS `pending_amount`,
 				SUM(CASE WHEN DATEDIFF(CURDATE(), a.custInvDate) BETWEEN 0 AND 15 THEN 1 ELSE 0 END) AS `zero_fifteen_days_count`,
 				SUM(CASE WHEN DATEDIFF(CURDATE(), a.custInvDate) BETWEEN 0 AND 15 THEN (CASE WHEN a.bookedUnderNew = 4 THEN (a.rate + a.agentRate - IFNULL(a.carrierPartialAmt,0)) 
 				ELSE (a.rate - IFNULL(a.carrierPartialAmt,0))  END) ELSE 0 END) AS `zero_fifteen_days_amount`,
@@ -824,6 +827,8 @@ class AccountPayableController extends CI_Controller
 				LIMIT 1000";	
 		}else{
 			$sql = "SELECT 
+				SUM(CASE WHEN ((JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.invoicePaidDate')) IS NOT NULL)  AND (JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.invoicePaidDate'))) != '') THEN 1 ELSE 0 END) AS `pending_count`,
+				SUM(CASE WHEN ((JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.invoicePaidDate')) IS NOT NULL)  AND (JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.invoicePaidDate'))) != '') THEN (CASE WHEN a.bookedUnderNew = 4 THEN (a.rate + a.agentRate - IFNULL(a.carrierPartialAmt,0)) ELSE (a.rate - IFNULL(a.carrierPartialAmt,0))  END) ELSE 0 END) AS `pending_amount`,			
 				SUM(CASE WHEN DATEDIFF(CURDATE(), JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.custInvDate'))) BETWEEN 0 AND 15 THEN 1 ELSE 0 END) AS `zero_fifteen_days_count`,
 				SUM(CASE WHEN DATEDIFF(CURDATE(), JSON_UNQUOTE(JSON_EXTRACT(a.dispatchMeta, '$.custInvDate'))) BETWEEN 0 AND 15 THEN (CASE WHEN a.bookedUnderNew = 4 THEN (a.rate + a.agentRate - IFNULL(a.carrierPartialAmt,0)) 
 				ELSE (a.rate - IFNULL(a.carrierPartialAmt,0))  END) ELSE 0 END) AS `zero_fifteen_days_amount`,

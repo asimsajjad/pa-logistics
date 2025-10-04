@@ -48,7 +48,6 @@ class AccountReceivableController extends CI_Controller {
 			}else { 
 				$table = 'dispatch'; 
 			}
-            		
 			
 			$invoiceType = $this->input->post('invoiceType');
 			$customerStatus = $this->input->post('status');
@@ -1538,11 +1537,16 @@ class AccountReceivableController extends CI_Controller {
 		$customerStatus = $this->input->post('status');
 		$invoiceNo = $this->input->post('invoiceNo');
 
+		$extraSelect = '';
 		if($dispatchType == 'paDispatch'){ 
 			$table = 'dispatch'; 
+			$extraSelect = "0 AS `pending_count`,
+			0 AS `pending_amount`,";
 		}
 		elseif($dispatchType == 'outsideDispatch') { 
 			$table = 'dispatchOutside';
+			$extraSelect = "SUM(CASE WHEN (a.carrierPayoutDate !='' AND a.carrierPayoutDate !='0000-00-00')  THEN 1 ELSE 0 END) AS `pending_count`,
+			SUM(CASE WHEN (a.carrierPayoutDate !='' AND a.carrierPayoutDate !='0000-00-00')  THEN a.parate ELSE 0 END) AS `pending_amount`,";
 		}elseif($dispatchType == 'warehouse_dispatch') { 
 			$table = 'warehouse_dispatch';
 		}
@@ -1572,6 +1576,8 @@ class AccountReceivableController extends CI_Controller {
 		}
 		if($dispatchType == 'warehouse_dispatch'){
 			$sql="SELECT 
+			SUM(CASE WHEN (a.carrierPayoutDate !='' AND a.carrierPayoutDate !='0000-00-00')  THEN 1 ELSE 0 END) AS `pending_count`,
+			SUM(CASE WHEN (a.carrierPayoutDate !='' AND a.carrierPayoutDate !='0000-00-00')  THEN a.parate ELSE 0 END) AS `pending_amount`,
 			SUM(CASE WHEN DATEDIFF(CURDATE(), a.invoiceDate) BETWEEN 0 AND 15 THEN 1 ELSE 0 END) AS `zero_fifteen_days_count`,
 			SUM(CASE WHEN DATEDIFF(CURDATE(), a.invoiceDate) BETWEEN 0 AND 15 THEN a.parate ELSE 0 END) AS `zero_fifteen_days_amount`,
 			SUM(CASE WHEN DATEDIFF(CURDATE(), a.invoiceDate) BETWEEN 16 AND 30 THEN 1 ELSE 0 END) AS `fifteen_thirty_days_count`,
@@ -1598,6 +1604,7 @@ class AccountReceivableController extends CI_Controller {
 			LIMIT 1000";
 		}else{
 			$sql="SELECT 
+			$extraSelect
 			SUM(CASE WHEN DATEDIFF(CURDATE(), a.invoiceDate) BETWEEN 0 AND 15 THEN 1 ELSE 0 END) AS `zero_fifteen_days_count`,
 			SUM(CASE WHEN DATEDIFF(CURDATE(), a.invoiceDate) BETWEEN 0 AND 15 THEN a.parate ELSE 0 END) AS `zero_fifteen_days_amount`,
 			SUM(CASE WHEN DATEDIFF(CURDATE(), a.invoiceDate) BETWEEN 16 AND 30 THEN 1 ELSE 0 END) AS `fifteen_thirty_days_count`,

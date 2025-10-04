@@ -44,6 +44,11 @@ class Accountreceivable_model extends CI_Model
 		}
 
 		if ($agingSearch != '') {  
+			if($table=='dispatchOutside' || $table == 'warehouse_dispatch'){
+				if($agingSearch == 'pending'){
+					$where .= " AND (a.carrierPayoutDate IS NOT NULL AND a.carrierPayoutDate != '0000-00-00')";
+				}
+			}
 			if($agingSearch == 'zero'){
 				$where .= " AND DATEDIFF(CURDATE(), a.invoiceDate) BETWEEN 0 AND 15";
 			}elseif($agingSearch == 'thirty'){
